@@ -1,0 +1,10 @@
+# Override optativo. El Compose base y sus secretos se conservan.
+services:
+  kestra:
+    image: kestra/kestra:v2.0.9
+    env_file:
+      - .env.kestra.secrets
+    volumes:
+      - ./ingesta:/opt/pset2-ingesta:ro
+      - ./.runtime/bridge:/opt/pset2-bridge:rw
+

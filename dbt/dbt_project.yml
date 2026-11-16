@@ -1,0 +1,38 @@
+name: pset2_cayambe
+version: "1.0.0"
+config-version: 2
+require-dbt-version: [">=1.11.11", "<1.12.0"]
+profile: pset2_cayambe
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+analysis-paths: ["analyses"]
+target-path: target
+clean-targets: ["target", "dbt_packages"]
+flags:
+  send_anonymous_usage_stats: false
+vars:
+  lote_id: ""
+  expected_obligaciones: null
+  expected_movimientos: null
+on-run-start:
+  - "{{ validar_lote() }}"
+models:
+  pset2_cayambe:
+    +materialized: table
+    +persist_docs:
+      relation: true
+      columns: true
+    bronze:
+      +schema: BRONZE
+      +tags: ["bronze"]
+    silver:
+      +schema: SILVER
+      +tags: ["silver"]
+    gold:
+      +schema: GOLD
+      +tags: ["gold"]
+data_tests:
+  +severity: error
+  +store_failures: false
+  +schema: BRONZE

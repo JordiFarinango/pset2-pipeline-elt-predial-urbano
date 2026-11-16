@@ -1,0 +1,313 @@
+{
+  "version": "raw-v1",
+  "id_version": "hmac-v1",
+  "obligation_pk": [
+    "CLAVE_CATASTRAL",
+    "AVA_FECHA",
+    "PRO_CODIGO",
+    "SECUENCIAL_AR"
+  ],
+  "source": {
+    "obligaciones": [
+      "CLAVE_CATASTRAL",
+      "AVA_FECHA",
+      "PRO_CODIGO",
+      "SECUENCIAL_AR",
+      "IM_PRINCIPAL",
+      "IM_SOLARES",
+      "IM_MEDICINA",
+      "IM_EDUCACION",
+      "IM_MAGISTERIO",
+      "IM_VIVIENDA",
+      "IM_BOMBEROS",
+      "IM_ESCOLARES",
+      "IM_PROCESAMIENTO",
+      "IM_BASURA",
+      "IM_BORDILLO",
+      "IM_ALCANTA",
+      "IM_ADOQUI_NUEVO",
+      "IM_ADO_GLOB_2011",
+      "IM_TOTAL",
+      "IM_FECHA_EMISION",
+      "IM_FECHA_CREA",
+      "IM_FECHA_ULTMODIFIC",
+      "IM_FECHA_PAGO",
+      "IM_FECHA_ANULACION",
+      "IM_ESTADO",
+      "IM_CONDICION",
+      "TIPO_DOC"
+    ],
+    "movimientos": [
+      "IMP_CODIGO",
+      "IMP_FECHA_PAGO",
+      "CLAVE_CATASTRAL",
+      "AVA_FECHA",
+      "PRO_CODIGO",
+      "SECUENCIAL_AR",
+      "IMP_PRINCIPAL",
+      "IMP_SOLARES",
+      "IMP_MEDICINA",
+      "IMP_EDUCACION",
+      "IMP_MAGISTERIO",
+      "IMP_VIVIENDA",
+      "IMP_BOMBEROS",
+      "IMP_ESCOLARES",
+      "IMP_PROCESAMIENTO",
+      "IMP_BASURA",
+      "IMP_BORDILLO",
+      "IMP_ALCANTA",
+      "IMP_ADOQUI_NUEVO",
+      "IMP_ADO_GLOB_2011",
+      "IMP_TOTAL",
+      "IMP_RECARGO",
+      "IMP_DESCUENTO",
+      "IMP_INT_MORA",
+      "COSTA_PROCESAL",
+      "SALDO",
+      "IMP_FECHA_EMISION",
+      "IMP_FECHA_CREA",
+      "IMP_FECHA_ULTMODIFIC",
+      "IMP_FECHA_ANULACION",
+      "FECHA_PROCESO",
+      "IMP_ESTADO",
+      "IMP_CONDICION",
+      "IMP_TIPO",
+      "TIPO_DOC"
+    ]
+  },
+  "raw": {
+    "obligaciones": [
+      {
+        "name": "OBLIGACION_ID",
+        "type": "id"
+      },
+      {
+        "name": "ANIO_FISCAL",
+        "type": "year"
+      },
+      {
+        "name": "IM_PRINCIPAL",
+        "type": "money"
+      },
+      {
+        "name": "IM_SOLARES",
+        "type": "money"
+      },
+      {
+        "name": "IM_MEDICINA",
+        "type": "money"
+      },
+      {
+        "name": "IM_EDUCACION",
+        "type": "money"
+      },
+      {
+        "name": "IM_MAGISTERIO",
+        "type": "money"
+      },
+      {
+        "name": "IM_VIVIENDA",
+        "type": "money"
+      },
+      {
+        "name": "IM_BOMBEROS",
+        "type": "money"
+      },
+      {
+        "name": "IM_ESCOLARES",
+        "type": "money"
+      },
+      {
+        "name": "IM_PROCESAMIENTO",
+        "type": "money"
+      },
+      {
+        "name": "IM_BASURA",
+        "type": "money"
+      },
+      {
+        "name": "IM_BORDILLO",
+        "type": "money"
+      },
+      {
+        "name": "IM_ALCANTA",
+        "type": "money"
+      },
+      {
+        "name": "IM_ADOQUI_NUEVO",
+        "type": "money"
+      },
+      {
+        "name": "IM_ADO_GLOB_2011",
+        "type": "money"
+      },
+      {
+        "name": "IM_TOTAL",
+        "type": "money"
+      },
+      {
+        "name": "IM_FECHA_EMISION",
+        "type": "date"
+      },
+      {
+        "name": "IM_FECHA_CREA",
+        "type": "date"
+      },
+      {
+        "name": "IM_FECHA_ULTMODIFIC",
+        "type": "date"
+      },
+      {
+        "name": "IM_FECHA_PAGO",
+        "type": "date"
+      },
+      {
+        "name": "IM_FECHA_ANULACION",
+        "type": "date"
+      },
+      {
+        "name": "IM_ESTADO",
+        "type": "code1"
+      },
+      {
+        "name": "IM_CONDICION",
+        "type": "code1"
+      },
+      {
+        "name": "TIPO_DOC",
+        "type": "code2"
+      }
+    ],
+    "movimientos": [
+      {
+        "name": "MOVIMIENTO_ID",
+        "type": "id"
+      },
+      {
+        "name": "OBLIGACION_ID",
+        "type": "id"
+      },
+      {
+        "name": "IMP_FECHA_PAGO",
+        "type": "date"
+      },
+      {
+        "name": "IMP_PRINCIPAL",
+        "type": "money"
+      },
+      {
+        "name": "IMP_SOLARES",
+        "type": "money"
+      },
+      {
+        "name": "IMP_MEDICINA",
+        "type": "money"
+      },
+      {
+        "name": "IMP_EDUCACION",
+        "type": "money"
+      },
+      {
+        "name": "IMP_MAGISTERIO",
+        "type": "money"
+      },
+      {
+        "name": "IMP_VIVIENDA",
+        "type": "money"
+      },
+      {
+        "name": "IMP_BOMBEROS",
+        "type": "money"
+      },
+      {
+        "name": "IMP_ESCOLARES",
+        "type": "money"
+      },
+      {
+        "name": "IMP_PROCESAMIENTO",
+        "type": "money"
+      },
+      {
+        "name": "IMP_BASURA",
+        "type": "money"
+      },
+      {
+        "name": "IMP_BORDILLO",
+        "type": "money"
+      },
+      {
+        "name": "IMP_ALCANTA",
+        "type": "money"
+      },
+      {
+        "name": "IMP_ADOQUI_NUEVO",
+        "type": "money"
+      },
+      {
+        "name": "IMP_ADO_GLOB_2011",
+        "type": "money"
+      },
+      {
+        "name": "IMP_TOTAL",
+        "type": "money"
+      },
+      {
+        "name": "IMP_RECARGO",
+        "type": "money"
+      },
+      {
+        "name": "IMP_DESCUENTO",
+        "type": "money"
+      },
+      {
+        "name": "IMP_INT_MORA",
+        "type": "money"
+      },
+      {
+        "name": "COSTA_PROCESAL",
+        "type": "money"
+      },
+      {
+        "name": "SALDO",
+        "type": "money"
+      },
+      {
+        "name": "IMP_FECHA_EMISION",
+        "type": "date"
+      },
+      {
+        "name": "IMP_FECHA_CREA",
+        "type": "date"
+      },
+      {
+        "name": "IMP_FECHA_ULTMODIFIC",
+        "type": "date"
+      },
+      {
+        "name": "IMP_FECHA_ANULACION",
+        "type": "date"
+      },
+      {
+        "name": "FECHA_PROCESO",
+        "type": "date"
+      },
+      {
+        "name": "IMP_ESTADO",
+        "type": "code1"
+      },
+      {
+        "name": "IMP_CONDICION",
+        "type": "code1"
+      },
+      {
+        "name": "IMP_TIPO",
+        "type": "code1"
+      },
+      {
+        "name": "TIPO_DOC",
+        "type": "code2"
+      }
+    ]
+  }
+}
+

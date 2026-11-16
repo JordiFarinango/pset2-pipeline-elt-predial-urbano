@@ -1,0 +1,169 @@
+version: 2
+sources:
+  - name: raw_cayambe
+    database: "{{ env_var('DBT_SNOWFLAKE_DATABASE') }}"
+    schema: RAW
+    description: "Capturas fiscales seudonimizadas, leidas exclusivamente por lote confirmado; nunca modelos escribibles Raw."
+    tables:
+      - name: obligaciones
+        identifier: RAW_URBANO_OBLIGACIONES
+        description: "Contrato raw-v1 de obligaciones; ids seudonimizados y fechas diarias. Los ids pueden repetirse entre lotes."
+        columns:
+          - name: OBLIGACION_ID
+            description: "HMAC estable de la PK completa. Identificador seudonimizado; no es anonimizacion. Origen: OBLIGACION_ID."
+          - name: ANIO_FISCAL
+            description: "Anio derivado de AVA_FECHA en el extractor; no sustituye fecha efectiva de emision. Origen: ANIO_FISCAL."
+          - name: IM_PRINCIPAL
+            description: "Origen IM_PRINCIPAL, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IM_SOLARES
+            description: "Origen IM_SOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IM_MEDICINA
+            description: "Origen IM_MEDICINA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IM_EDUCACION
+            description: "Origen IM_EDUCACION, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IM_MAGISTERIO
+            description: "Origen IM_MAGISTERIO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IM_VIVIENDA
+            description: "Origen IM_VIVIENDA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IM_BOMBEROS
+            description: "Origen IM_BOMBEROS, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IM_ESCOLARES
+            description: "Origen IM_ESCOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IM_PROCESAMIENTO
+            description: "Origen IM_PROCESAMIENTO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IM_BASURA
+            description: "Origen IM_BASURA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Su nombre no acredita una tasa de basura."
+          - name: IM_BORDILLO
+            description: "Origen IM_BORDILLO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IM_ALCANTA
+            description: "Origen IM_ALCANTA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IM_ADOQUI_NUEVO
+            description: "Origen IM_ADOQUI_NUEVO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IM_ADO_GLOB_2011
+            description: "Origen IM_ADO_GLOB_2011, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Semantica completa pendiente."
+          - name: IM_TOTAL
+            description: "IM_TOTAL observado en la captura actual. No acredita total originalmente emitido ni saldo historico. Origen: IM_TOTAL."
+          - name: IM_FECHA_EMISION
+            description: "Origen IM_FECHA_EMISION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+          - name: IM_FECHA_CREA
+            description: "Origen IM_FECHA_CREA, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+          - name: IM_FECHA_ULTMODIFIC
+            description: "Origen IM_FECHA_ULTMODIFIC, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+          - name: IM_FECHA_PAGO
+            description: "Origen IM_FECHA_PAGO, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+          - name: IM_FECHA_ANULACION
+            description: "Origen IM_FECHA_ANULACION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+          - name: IM_ESTADO
+            description: "Codigo literal actual. No se convierte automaticamente en pagado, pendiente o etiqueta predictiva. Origen: IM_ESTADO."
+          - name: IM_CONDICION
+            description: "Codigo literal sin catalogo universal validado; conservar nulos y valores originales. Origen: IM_CONDICION."
+          - name: TIPO_DOC
+            description: "Codigo documental literal. AB y FA son categorias observadas; no justifican por si solos sumar pagos netos. Origen: TIPO_DOC."
+          - name: LOTE_ID
+            description: "UUID de la captura confirmada seleccionada. No mezclar lotes para sumar obligaciones o movimientos. Origen: LOTE_ID."
+          - name: CAPTURADO_EN
+            description: "Inicio de captura UTC del ejecutor; no es emision efectiva ni tiempo historico del estado. Origen: CAPTURADO_EN."
+          - name: ID_VERSION
+            description: "Version del identificador HMAC protegido; no incluye su secreto. Origen: ID_VERSION."
+      - name: movimientos
+        identifier: RAW_URBANO_MOVIMIENTOS_PAGO
+        description: "Contrato raw-v1 de movimientos; ids seudonimizados y fechas diarias. Los ids pueden repetirse entre lotes."
+        columns:
+          - name: MOVIMIENTO_ID
+            description: "HMAC estable de la PK completa del movimiento, incluidas fecha y hora locales originales. Origen: MOVIMIENTO_ID."
+          - name: OBLIGACION_ID
+            description: "HMAC estable de la PK completa. Identificador seudonimizado; no es anonimizacion. Origen: OBLIGACION_ID."
+          - name: IMP_FECHA_PAGO
+            description: "Origen IMP_FECHA_PAGO, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+          - name: IMP_PRINCIPAL
+            description: "Origen IMP_PRINCIPAL, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_SOLARES
+            description: "Origen IMP_SOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_MEDICINA
+            description: "Origen IMP_MEDICINA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_EDUCACION
+            description: "Origen IMP_EDUCACION, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_MAGISTERIO
+            description: "Origen IMP_MAGISTERIO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_VIVIENDA
+            description: "Origen IMP_VIVIENDA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_BOMBEROS
+            description: "Origen IMP_BOMBEROS, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_ESCOLARES
+            description: "Origen IMP_ESCOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_PROCESAMIENTO
+            description: "Origen IMP_PROCESAMIENTO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_BASURA
+            description: "Origen IMP_BASURA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Su nombre no acredita una tasa de basura."
+          - name: IMP_BORDILLO
+            description: "Origen IMP_BORDILLO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_ALCANTA
+            description: "Origen IMP_ALCANTA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_ADOQUI_NUEVO
+            description: "Origen IMP_ADOQUI_NUEVO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_ADO_GLOB_2011
+            description: "Origen IMP_ADO_GLOB_2011, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Semantica completa pendiente."
+          - name: IMP_TOTAL
+            description: "IMP_TOTAL declarado, de cualquier estado/documento. No equivale automaticamente a pago neto. Origen: IMP_TOTAL."
+          - name: IMP_RECARGO
+            description: "Origen IMP_RECARGO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_DESCUENTO
+            description: "Origen IMP_DESCUENTO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: IMP_INT_MORA
+            description: "Origen IMP_INT_MORA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: COSTA_PROCESAL
+            description: "Origen COSTA_PROCESAL, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+          - name: SALDO
+            description: "Saldo consignado en un movimiento. Medida NO aditiva; no sumar saldos entre movimientos. Origen: SALDO."
+          - name: IMP_FECHA_EMISION
+            description: "Origen IMP_FECHA_EMISION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+          - name: IMP_FECHA_CREA
+            description: "Origen IMP_FECHA_CREA, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+          - name: IMP_FECHA_ULTMODIFIC
+            description: "Origen IMP_FECHA_ULTMODIFIC, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+          - name: IMP_FECHA_ANULACION
+            description: "Origen IMP_FECHA_ANULACION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+          - name: FECHA_PROCESO
+            description: "Origen FECHA_PROCESO, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+          - name: IMP_ESTADO
+            description: "Codigo literal actual. No se convierte automaticamente en pagado, pendiente o etiqueta predictiva. Origen: IMP_ESTADO."
+          - name: IMP_CONDICION
+            description: "Codigo literal sin catalogo universal validado; conservar nulos y valores originales. Origen: IMP_CONDICION."
+          - name: IMP_TIPO
+            description: "Clasificacion literal del movimiento sin reinterpretacion general. Origen: IMP_TIPO."
+          - name: TIPO_DOC
+            description: "Codigo documental literal. AB y FA son categorias observadas; no justifican por si solos sumar pagos netos. Origen: TIPO_DOC."
+          - name: LOTE_ID
+            description: "UUID de la captura confirmada seleccionada. No mezclar lotes para sumar obligaciones o movimientos. Origen: LOTE_ID."
+          - name: CAPTURADO_EN
+            description: "Inicio de captura UTC del ejecutor; no es emision efectiva ni tiempo historico del estado. Origen: CAPTURADO_EN."
+          - name: ID_VERSION
+            description: "Version del identificador HMAC protegido; no incluye su secreto. Origen: ID_VERSION."
+      - name: ingesta_lotes
+        identifier: INGESTA_LOTES
+        description: "Ledger confirmado atomicamente con ambas tablas Raw; COMMIT_EN no nulo, una fila por lote."
+        columns:
+          - name: LOTE_ID
+            description: "Metadato LOTE_ID del lote confirmado; no es un registro municipal individual."
+          - name: FISCAL_DESDE
+            description: "Metadato FISCAL_DESDE del lote confirmado; no es un registro municipal individual."
+          - name: FISCAL_HASTA
+            description: "Metadato FISCAL_HASTA del lote confirmado; no es un registro municipal individual."
+          - name: LIMITE
+            description: "Metadato LIMITE del lote confirmado; no es un registro municipal individual."
+          - name: CAPTURADO_EN
+            description: "Metadato CAPTURADO_EN del lote confirmado; no es un registro municipal individual."
+          - name: ID_VERSION
+            description: "Metadato ID_VERSION del lote confirmado; no es un registro municipal individual."
+          - name: CONTRATO_VERSION
+            description: "Metadato CONTRATO_VERSION del lote confirmado; no es un registro municipal individual."
+          - name: KEY_TAG
+            description: "HMAC de constante de control para versionado, no secreto ni dato personal. No se propaga a las capas."
+          - name: OBLIGACIONES
+            description: "Metadato OBLIGACIONES del lote confirmado; no es un registro municipal individual."
+          - name: MOVIMIENTOS
+            description: "Metadato MOVIMIENTOS del lote confirmado; no es un registro municipal individual."
+          - name: CONTENIDO_SHA256
+            description: "Digest del contenido protegido. No se utiliza para inferir valores originales."
+          - name: COMMIT_EN
+            description: "Metadato COMMIT_EN del lote confirmado; no es un registro municipal individual."

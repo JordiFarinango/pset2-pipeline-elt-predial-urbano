@@ -1,0 +1,21 @@
+id: verificar_snowflake
+namespace: usfq.pset2
+
+tasks:
+  - id: consultar_snowflake
+    type: io.kestra.plugin.jdbc.snowflake.Query
+    url: jdbc:snowflake://xsdiwiv-xz59673.snowflakecomputing.com
+    username: PSET2_PIPELINE_SVC
+    privateKey: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
+    privateKeyPassword: "{{ secret('SNOWFLAKE_PRIVATE_KEY_PASSWORD') }}"
+    role: PSET2_PIPELINE_ROLE
+    warehouse: COMPUTE_WH
+    database: PSET2_CAYAMBE
+    schema: RAW
+    sql: |
+      SELECT
+        CURRENT_USER() AS USUARIO,
+        CURRENT_ROLE() AS ROL,
+        CURRENT_DATABASE() AS BASE_DATOS,
+        CURRENT_WAREHOUSE() AS WAREHOUSE
+    fetchType: FETCH_ONE

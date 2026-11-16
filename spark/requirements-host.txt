@@ -1,0 +1,3 @@
+# Solo puente Windows; no instalar PySpark en Windows ni cambiar el worker.
+# El conector ya fue fijado para la ingesta; reutilizar el entorno si cumple.
+snowflake-connector-python==5.2.0

@@ -1,0 +1,32 @@
+select
+    r.OBLIGACION_ID as obligacion_id,
+    r.ANIO_FISCAL as anio_fiscal,
+    r.IM_PRINCIPAL as importe_principal,
+    r.IM_SOLARES as importe_solares,
+    r.IM_MEDICINA as importe_medicina,
+    r.IM_EDUCACION as importe_educacion,
+    r.IM_MAGISTERIO as importe_magisterio,
+    r.IM_VIVIENDA as importe_vivienda,
+    r.IM_BOMBEROS as importe_bomberos,
+    r.IM_ESCOLARES as importe_escolares,
+    r.IM_PROCESAMIENTO as importe_procesamiento,
+    r.IM_BASURA as importe_basura,
+    r.IM_BORDILLO as importe_bordillo,
+    r.IM_ALCANTA as importe_alcanta,
+    r.IM_ADOQUI_NUEVO as importe_adoqui_nuevo,
+    r.IM_ADO_GLOB_2011 as importe_ado_glob_2011,
+    r.IM_TOTAL as total_obligacion_declarado,
+    r.IM_FECHA_EMISION as fecha_emision_declarada,
+    r.IM_FECHA_CREA as fecha_creacion_declarada,
+    r.IM_FECHA_ULTMODIFIC as fecha_modificacion_declarada,
+    r.IM_FECHA_PAGO as fecha_pago_actual_declarada,
+    r.IM_FECHA_ANULACION as fecha_anulacion_declarada,
+    r.IM_ESTADO as estado_codigo,
+    r.IM_CONDICION as condicion_codigo,
+    r.TIPO_DOC as tipo_documento_codigo,
+    r.LOTE_ID as lote_id,
+    r.CAPTURADO_EN as capturado_en,
+    r.ID_VERSION as id_version
+from {{ source('raw_cayambe', 'obligaciones') }} r
+inner join {{ ref('br_lote_confirmado') }} l on r.lote_id = l.lote_id
+where r.lote_id = {{ lote_id_sql() }}

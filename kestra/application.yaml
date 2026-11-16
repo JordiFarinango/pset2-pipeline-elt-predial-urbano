@@ -1,0 +1,27 @@
+# Los placeholders los resuelve Kestra/Micronaut desde el entorno del contenedor.
+# Este archivo no contiene secretos ni definiciones de workflows.
+datasources:
+  postgres:
+    url: "jdbc:postgresql://postgres:5432/${POSTGRES_DB}"
+    driver-class-name: org.postgresql.Driver
+    username: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+
+kestra:
+  server:
+    basic-auth:
+      enabled: true
+      username: "${KESTRA_ADMIN_EMAIL}"
+      password: "${KESTRA_ADMIN_PASSWORD}"
+  repository:
+    type: postgres
+  queue:
+    type: postgres
+  storage:
+    type: local
+    local:
+      base-path: /home/kestra/storage
+  tasks:
+    tmp-dir:
+      path: /tmp/kestra-wd/tmp
+  url: "${KESTRA_PUBLIC_URL}"

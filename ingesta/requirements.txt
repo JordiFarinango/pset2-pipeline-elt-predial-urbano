@@ -1,0 +1,3 @@
+# Instalacion manual autorizada; Python 3.11+ (recomendado 3.12).
+snowflake-connector-python==5.2.0
+

@@ -1,0 +1,64 @@
+id: ingesta_raw_urbano
+namespace: usfq.pset2
+description: Solicita una captura protegida al worker Windows y espera su resultado transaccional.
+
+concurrency:
+  limit: 1
+  behavior: QUEUE
+
+inputs:
+  - id: lote_id
+    type: STRING
+    description: UUID en minusculas. Reutilizarlo para reintentar el mismo lote.
+  - id: fiscal_desde
+    type: DATE
+    defaults: "2024-01-01"
+  - id: fiscal_hasta
+    type: DATE
+    defaults: "2025-01-01"
+  - id: limite
+    type: INT
+    defaults: 10
+    description: Primeras N obligaciones por PK completa; 0 solicita el rango completo sujeto al tope local.
+
+tasks:
+  - id: solicitar_y_esperar
+    type: io.kestra.plugin.scripts.shell.Commands
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process
+    timeout: PT35M
+    # Nueva solicitud de carga solo tras confirmar SQL_TRANSITORIO terminal.
+    # Los fallos permanentes se entregan a exigir_confirmacion, sin reextraer.
+    retry:
+      type: exponential
+      interval: PT30S
+      maxInterval: PT1M
+      delayFactor: 2
+      maxAttempts: 3
+      maxDuration: PT100M
+      warningOnRetry: true
+    env:
+      REQUEST_ID: "{{ execution.id }}"
+      ATTEMPT: "{{ taskrun.attemptsCount }}"
+      LOTE_ID: "{{ inputs.lote_id }}"
+      FISCAL_DESDE: "{{ inputs.fiscal_desde }}"
+      FISCAL_HASTA: "{{ inputs.fiscal_hasta }}"
+      LIMITE: "{{ inputs.limite }}"
+    commands:
+      - bash /opt/pset2-ingesta/submit.sh
+    outputFiles:
+      - resumen.json
+
+  - id: exigir_confirmacion
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.solicitar_y_esperar.vars.status == 'success' }}"
+    errorMessage: INGESTA_NO_CONFIRMADA_REVISAR_RESUMEN_SEGURO
+
+outputs:
+  - id: resumen
+    type: FILE
+    value: "{{ outputs.solicitar_y_esperar.outputFiles['resumen.json'] }}"
+  - id: lote_id
+    type: STRING
+    value: "{{ inputs.lote_id }}"

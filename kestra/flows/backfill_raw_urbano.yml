@@ -1,0 +1,60 @@
+id: backfill_raw_urbano
+namespace: usfq.pset2
+description: Backfill manual de muestras fiscales explicitas; por defecto solo valida el plan.
+
+concurrency:
+  limit: 1
+  behavior: QUEUE
+
+inputs:
+  - id: plan
+    type: STRING
+    description: "Una linea por periodo: UUID,YYYY-MM-DD,YYYY-MM-DD,limite. Sin cabecera ni espacios; hasta exclusiva."
+  - id: ejecutar
+    type: BOOL
+    defaults: false
+  - id: confirmacion
+    type: STRING
+    defaults: PLANIFICAR
+    description: Para cargar la muestra indicar EJECUTAR_MUESTRA y ejecutar=true.
+
+tasks:
+  - id: validar_plan
+    type: io.kestra.plugin.scripts.shell.Commands
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process
+    timeout: PT1M
+    env:
+      PLAN: "{{ inputs.plan }}"
+      EJECUTAR: "{{ inputs.ejecutar }}"
+      CONFIRMACION: "{{ inputs.confirmacion }}"
+    commands:
+      - bash /opt/pset2-ingesta/validate_backfill.sh
+    outputFiles:
+      - plan_backfill.json
+
+  - id: ejecutar_si_autorizado
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ inputs.ejecutar }}"
+    then:
+      - id: periodos_seriales
+        type: io.kestra.plugin.core.flow.Loop
+        concurrencyLimit: 1
+        values: "{{ outputs.validar_plan.vars.periodos | toJson }}"
+        tasks:
+          - id: ingestar_periodo
+            type: io.kestra.plugin.core.flow.Subflow
+            namespace: usfq.pset2
+            flowId: ingesta_raw_urbano
+            wait: true
+            transmitFailed: true
+            inputs:
+              lote_id: "{{ fromJson(item.value).lote_id }}"
+              fiscal_desde: "{{ fromJson(item.value).fiscal_desde }}"
+              fiscal_hasta: "{{ fromJson(item.value).fiscal_hasta }}"
+              limite: "{{ fromJson(item.value).limite }}"
+
+outputs:
+  - id: plan
+    type: FILE
+    value: "{{ outputs.validar_plan.outputFiles['plan_backfill.json'] }}"

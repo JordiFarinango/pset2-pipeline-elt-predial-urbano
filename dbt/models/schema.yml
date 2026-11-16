@@ -1,0 +1,874 @@
+version: 2
+models:
+  - name: br_lote_confirmado
+    description: "Una fila del ledger para el UUID confirmado; sin fallback."
+    columns:
+      - name: lote_id
+        description: "UUID de la captura confirmada seleccionada. No mezclar lotes para sumar obligaciones o movimientos. Origen: LOTE_ID."
+        data_tests:
+          - not_null
+          - unique
+      - name: fiscal_desde
+        description: "Atributo fiscal_desde del lote seleccionado; conservar trazabilidad sin reinterpretar codigos."
+      - name: fiscal_hasta
+        description: "Atributo fiscal_hasta del lote seleccionado; conservar trazabilidad sin reinterpretar codigos."
+      - name: limite
+        description: "Atributo limite del lote seleccionado; conservar trazabilidad sin reinterpretar codigos."
+      - name: capturado_en
+        description: "Inicio de captura UTC del ejecutor; no es emision efectiva ni tiempo historico del estado. Origen: CAPTURADO_EN."
+        data_tests:
+          - not_null
+      - name: id_version
+        description: "Version del identificador HMAC protegido; no incluye su secreto. Origen: ID_VERSION."
+        data_tests:
+          - not_null
+      - name: contrato_version
+        description: "Atributo contrato_version del lote seleccionado; conservar trazabilidad sin reinterpretar codigos."
+      - name: obligaciones
+        description: "Atributo obligaciones del lote seleccionado; conservar trazabilidad sin reinterpretar codigos."
+      - name: movimientos
+        description: "Atributo movimientos del lote seleccionado; conservar trazabilidad sin reinterpretar codigos."
+      - name: commit_en
+        description: "Atributo commit_en del lote seleccionado; conservar trazabilidad sin reinterpretar codigos."
+  - name: br_obligaciones
+    description: "Proyeccion explicita Raw de obligaciones del lote seleccionado, con nombres normalizados sin alterar valores."
+    columns:
+      - name: obligacion_id
+        description: "HMAC estable de la PK completa. Identificador seudonimizado; no es anonimizacion. Origen: OBLIGACION_ID."
+        data_tests:
+          - not_null
+          - unique
+      - name: anio_fiscal
+        description: "Anio derivado de AVA_FECHA en el extractor; no sustituye fecha efectiva de emision. Origen: ANIO_FISCAL."
+      - name: importe_principal
+        description: "Origen IM_PRINCIPAL, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_solares
+        description: "Origen IM_SOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_medicina
+        description: "Origen IM_MEDICINA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_educacion
+        description: "Origen IM_EDUCACION, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_magisterio
+        description: "Origen IM_MAGISTERIO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_vivienda
+        description: "Origen IM_VIVIENDA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_bomberos
+        description: "Origen IM_BOMBEROS, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_escolares
+        description: "Origen IM_ESCOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_procesamiento
+        description: "Origen IM_PROCESAMIENTO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_basura
+        description: "Origen IM_BASURA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Su nombre no acredita una tasa de basura."
+      - name: importe_bordillo
+        description: "Origen IM_BORDILLO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_alcanta
+        description: "Origen IM_ALCANTA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_adoqui_nuevo
+        description: "Origen IM_ADOQUI_NUEVO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_ado_glob_2011
+        description: "Origen IM_ADO_GLOB_2011, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Semantica completa pendiente."
+      - name: total_obligacion_declarado
+        description: "IM_TOTAL observado en la captura actual. No acredita total originalmente emitido ni saldo historico. Origen: IM_TOTAL."
+      - name: fecha_emision_declarada
+        description: "Origen IM_FECHA_EMISION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_creacion_declarada
+        description: "Origen IM_FECHA_CREA, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_modificacion_declarada
+        description: "Origen IM_FECHA_ULTMODIFIC, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_pago_actual_declarada
+        description: "Origen IM_FECHA_PAGO, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_anulacion_declarada
+        description: "Origen IM_FECHA_ANULACION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: estado_codigo
+        description: "Codigo literal actual. No se convierte automaticamente en pagado, pendiente o etiqueta predictiva. Origen: IM_ESTADO."
+      - name: condicion_codigo
+        description: "Codigo literal sin catalogo universal validado; conservar nulos y valores originales. Origen: IM_CONDICION."
+      - name: tipo_documento_codigo
+        description: "Codigo documental literal. AB y FA son categorias observadas; no justifican por si solos sumar pagos netos. Origen: TIPO_DOC."
+      - name: lote_id
+        description: "UUID de la captura confirmada seleccionada. No mezclar lotes para sumar obligaciones o movimientos. Origen: LOTE_ID."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('br_lote_confirmado')
+                field: lote_id
+      - name: capturado_en
+        description: "Inicio de captura UTC del ejecutor; no es emision efectiva ni tiempo historico del estado. Origen: CAPTURADO_EN."
+        data_tests:
+          - not_null
+      - name: id_version
+        description: "Version del identificador HMAC protegido; no incluye su secreto. Origen: ID_VERSION."
+        data_tests:
+          - not_null
+  - name: br_movimientos
+    description: "Proyeccion explicita Raw de movimientos del lote seleccionado, con nombres normalizados sin alterar valores."
+    columns:
+      - name: movimiento_id
+        description: "HMAC estable de la PK completa del movimiento, incluidas fecha y hora locales originales. Origen: MOVIMIENTO_ID."
+        data_tests:
+          - not_null
+          - unique
+      - name: obligacion_id
+        description: "HMAC estable de la PK completa. Identificador seudonimizado; no es anonimizacion. Origen: OBLIGACION_ID."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('br_obligaciones')
+                field: obligacion_id
+      - name: fecha_pago_declarada
+        description: "Origen IMP_FECHA_PAGO, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: importe_principal
+        description: "Origen IMP_PRINCIPAL, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_solares
+        description: "Origen IMP_SOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_medicina
+        description: "Origen IMP_MEDICINA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_educacion
+        description: "Origen IMP_EDUCACION, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_magisterio
+        description: "Origen IMP_MAGISTERIO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_vivienda
+        description: "Origen IMP_VIVIENDA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_bomberos
+        description: "Origen IMP_BOMBEROS, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_escolares
+        description: "Origen IMP_ESCOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_procesamiento
+        description: "Origen IMP_PROCESAMIENTO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_basura
+        description: "Origen IMP_BASURA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Su nombre no acredita una tasa de basura."
+      - name: importe_bordillo
+        description: "Origen IMP_BORDILLO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_alcanta
+        description: "Origen IMP_ALCANTA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_adoqui_nuevo
+        description: "Origen IMP_ADOQUI_NUEVO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_ado_glob_2011
+        description: "Origen IMP_ADO_GLOB_2011, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Semantica completa pendiente."
+      - name: total_movimiento_declarado
+        description: "IMP_TOTAL declarado, de cualquier estado/documento. No equivale automaticamente a pago neto. Origen: IMP_TOTAL."
+      - name: recargo_declarado
+        description: "Origen IMP_RECARGO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: descuento_declarado
+        description: "Origen IMP_DESCUENTO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: interes_mora_declarado
+        description: "Origen IMP_INT_MORA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: costas_procesales_declaradas
+        description: "Origen COSTA_PROCESAL, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: saldo_declarado
+        description: "Saldo consignado en un movimiento. Medida NO aditiva; no sumar saldos entre movimientos. Origen: SALDO."
+      - name: fecha_emision_declarada
+        description: "Origen IMP_FECHA_EMISION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_creacion_declarada
+        description: "Origen IMP_FECHA_CREA, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_modificacion_declarada
+        description: "Origen IMP_FECHA_ULTMODIFIC, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_anulacion_declarada
+        description: "Origen IMP_FECHA_ANULACION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_proceso_declarada
+        description: "Origen FECHA_PROCESO, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: estado_codigo
+        description: "Codigo literal actual. No se convierte automaticamente en pagado, pendiente o etiqueta predictiva. Origen: IMP_ESTADO."
+      - name: condicion_codigo
+        description: "Codigo literal sin catalogo universal validado; conservar nulos y valores originales. Origen: IMP_CONDICION."
+      - name: tipo_movimiento_codigo
+        description: "Clasificacion literal del movimiento sin reinterpretacion general. Origen: IMP_TIPO."
+      - name: tipo_documento_codigo
+        description: "Codigo documental literal. AB y FA son categorias observadas; no justifican por si solos sumar pagos netos. Origen: TIPO_DOC."
+      - name: lote_id
+        description: "UUID de la captura confirmada seleccionada. No mezclar lotes para sumar obligaciones o movimientos. Origen: LOTE_ID."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('br_lote_confirmado')
+                field: lote_id
+      - name: capturado_en
+        description: "Inicio de captura UTC del ejecutor; no es emision efectiva ni tiempo historico del estado. Origen: CAPTURADO_EN."
+        data_tests:
+          - not_null
+      - name: id_version
+        description: "Version del identificador HMAC protegido; no incluye su secreto. Origen: ID_VERSION."
+        data_tests:
+          - not_null
+  - name: sl_obligaciones
+    description: "Una fila por obligacion en un solo lote; conserva anomalias mediante flags, sin excluir filas."
+    columns:
+      - name: obligacion_id
+        description: "HMAC estable de la PK completa. Identificador seudonimizado; no es anonimizacion. Origen: OBLIGACION_ID."
+        data_tests:
+          - not_null
+          - unique
+      - name: anio_fiscal
+        description: "Anio derivado de AVA_FECHA en el extractor; no sustituye fecha efectiva de emision. Origen: ANIO_FISCAL."
+      - name: importe_principal
+        description: "Origen IM_PRINCIPAL, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_solares
+        description: "Origen IM_SOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_medicina
+        description: "Origen IM_MEDICINA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_educacion
+        description: "Origen IM_EDUCACION, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_magisterio
+        description: "Origen IM_MAGISTERIO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_vivienda
+        description: "Origen IM_VIVIENDA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_bomberos
+        description: "Origen IM_BOMBEROS, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_escolares
+        description: "Origen IM_ESCOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_procesamiento
+        description: "Origen IM_PROCESAMIENTO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_basura
+        description: "Origen IM_BASURA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Su nombre no acredita una tasa de basura."
+      - name: importe_bordillo
+        description: "Origen IM_BORDILLO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_alcanta
+        description: "Origen IM_ALCANTA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_adoqui_nuevo
+        description: "Origen IM_ADOQUI_NUEVO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_ado_glob_2011
+        description: "Origen IM_ADO_GLOB_2011, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Semantica completa pendiente."
+      - name: total_obligacion_declarado
+        description: "IM_TOTAL observado en la captura actual. No acredita total originalmente emitido ni saldo historico. Origen: IM_TOTAL."
+      - name: fecha_emision_declarada
+        description: "Origen IM_FECHA_EMISION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_creacion_declarada
+        description: "Origen IM_FECHA_CREA, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_modificacion_declarada
+        description: "Origen IM_FECHA_ULTMODIFIC, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_pago_actual_declarada
+        description: "Origen IM_FECHA_PAGO, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_anulacion_declarada
+        description: "Origen IM_FECHA_ANULACION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: estado_codigo
+        description: "Codigo literal actual. No se convierte automaticamente en pagado, pendiente o etiqueta predictiva. Origen: IM_ESTADO."
+      - name: condicion_codigo
+        description: "Codigo literal sin catalogo universal validado; conservar nulos y valores originales. Origen: IM_CONDICION."
+      - name: tipo_documento_codigo
+        description: "Codigo documental literal. AB y FA son categorias observadas; no justifican por si solos sumar pagos netos. Origen: TIPO_DOC."
+      - name: lote_id
+        description: "UUID de la captura confirmada seleccionada. No mezclar lotes para sumar obligaciones o movimientos. Origen: LOTE_ID."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('br_lote_confirmado')
+                field: lote_id
+      - name: capturado_en
+        description: "Inicio de captura UTC del ejecutor; no es emision efectiva ni tiempo historico del estado. Origen: CAPTURADO_EN."
+        data_tests:
+          - not_null
+      - name: id_version
+        description: "Version del identificador HMAC protegido; no incluye su secreto. Origen: ID_VERSION."
+        data_tests:
+          - not_null
+      - name: dq_fecha_emision_nula
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: fecha_emision_declarada is null"
+      - name: dq_emision_pre1901
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(fecha_emision_declarada < '1901-01-01'::date,false)"
+      - name: dq_creacion_posterior_emision
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(fecha_creacion_declarada > fecha_emision_declarada,false)"
+      - name: dq_total_nulo
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: total_obligacion_declarado is null"
+      - name: dq_total_negativo
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(total_obligacion_declarado < 0,false)"
+      - name: dq_principal_negativo
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(importe_principal < 0,false)"
+      - name: dq_pago_posterior_captura
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(fecha_pago_actual_declarada > to_date(convert_timezone('UTC',capturado_en)),false)"
+      - name: dq_a_sin_fecha_anulacion
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(estado_codigo='A' and fecha_anulacion_declarada is null,false)"
+      - name: dq_f_con_fecha_anulacion
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(estado_codigo='F' and fecha_anulacion_declarada is not null,false)"
+  - name: sl_movimientos
+    description: "Una fila por movimiento en un solo lote; conserva anomalias mediante flags, sin excluir filas."
+    columns:
+      - name: movimiento_id
+        description: "HMAC estable de la PK completa del movimiento, incluidas fecha y hora locales originales. Origen: MOVIMIENTO_ID."
+        data_tests:
+          - not_null
+          - unique
+      - name: obligacion_id
+        description: "HMAC estable de la PK completa. Identificador seudonimizado; no es anonimizacion. Origen: OBLIGACION_ID."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('sl_obligaciones')
+                field: obligacion_id
+      - name: fecha_pago_declarada
+        description: "Origen IMP_FECHA_PAGO, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: importe_principal
+        description: "Origen IMP_PRINCIPAL, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_solares
+        description: "Origen IMP_SOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_medicina
+        description: "Origen IMP_MEDICINA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_educacion
+        description: "Origen IMP_EDUCACION, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_magisterio
+        description: "Origen IMP_MAGISTERIO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_vivienda
+        description: "Origen IMP_VIVIENDA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_bomberos
+        description: "Origen IMP_BOMBEROS, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_escolares
+        description: "Origen IMP_ESCOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_procesamiento
+        description: "Origen IMP_PROCESAMIENTO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_basura
+        description: "Origen IMP_BASURA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Su nombre no acredita una tasa de basura."
+      - name: importe_bordillo
+        description: "Origen IMP_BORDILLO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_alcanta
+        description: "Origen IMP_ALCANTA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_adoqui_nuevo
+        description: "Origen IMP_ADOQUI_NUEVO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_ado_glob_2011
+        description: "Origen IMP_ADO_GLOB_2011, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Semantica completa pendiente."
+      - name: total_movimiento_declarado
+        description: "IMP_TOTAL declarado, de cualquier estado/documento. No equivale automaticamente a pago neto. Origen: IMP_TOTAL."
+      - name: recargo_declarado
+        description: "Origen IMP_RECARGO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: descuento_declarado
+        description: "Origen IMP_DESCUENTO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: interes_mora_declarado
+        description: "Origen IMP_INT_MORA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: costas_procesales_declaradas
+        description: "Origen COSTA_PROCESAL, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: saldo_declarado
+        description: "Saldo consignado en un movimiento. Medida NO aditiva; no sumar saldos entre movimientos. Origen: SALDO."
+      - name: fecha_emision_declarada
+        description: "Origen IMP_FECHA_EMISION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_creacion_declarada
+        description: "Origen IMP_FECHA_CREA, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_modificacion_declarada
+        description: "Origen IMP_FECHA_ULTMODIFIC, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_anulacion_declarada
+        description: "Origen IMP_FECHA_ANULACION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_proceso_declarada
+        description: "Origen FECHA_PROCESO, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: estado_codigo
+        description: "Codigo literal actual. No se convierte automaticamente en pagado, pendiente o etiqueta predictiva. Origen: IMP_ESTADO."
+      - name: condicion_codigo
+        description: "Codigo literal sin catalogo universal validado; conservar nulos y valores originales. Origen: IMP_CONDICION."
+      - name: tipo_movimiento_codigo
+        description: "Clasificacion literal del movimiento sin reinterpretacion general. Origen: IMP_TIPO."
+      - name: tipo_documento_codigo
+        description: "Codigo documental literal. AB y FA son categorias observadas; no justifican por si solos sumar pagos netos. Origen: TIPO_DOC."
+      - name: lote_id
+        description: "UUID de la captura confirmada seleccionada. No mezclar lotes para sumar obligaciones o movimientos. Origen: LOTE_ID."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('br_lote_confirmado')
+                field: lote_id
+      - name: capturado_en
+        description: "Inicio de captura UTC del ejecutor; no es emision efectiva ni tiempo historico del estado. Origen: CAPTURADO_EN."
+        data_tests:
+          - not_null
+      - name: id_version
+        description: "Version del identificador HMAC protegido; no incluye su secreto. Origen: ID_VERSION."
+        data_tests:
+          - not_null
+      - name: dq_fecha_pago_nula
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: fecha_pago_declarada is null"
+      - name: dq_pago_anterior_emision
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(fecha_pago_declarada < fecha_emision_declarada,false)"
+      - name: dq_pago_posterior_captura
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(fecha_pago_declarada > to_date(convert_timezone('UTC',capturado_en)),false)"
+      - name: dq_fecha_proceso_nula
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: fecha_proceso_declarada is null"
+      - name: dq_total_nulo
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: total_movimiento_declarado is null"
+      - name: dq_total_negativo
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(total_movimiento_declarado < 0,false)"
+      - name: dq_a_sin_fecha_anulacion
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(estado_codigo='A' and fecha_anulacion_declarada is null,false)"
+      - name: dq_f_con_fecha_anulacion
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(estado_codigo='F' and fecha_anulacion_declarada is not null,false)"
+  - name: sl_resumen_movimientos_por_obligacion
+    description: "Una fila por obligacion, incluso sin movimientos. Sumas declaradas descriptivas de todos los estados; no equivalen a pago neto o saldo."
+    columns:
+      - name: obligacion_id
+        description: "HMAC estable de la PK completa. Identificador seudonimizado; no es anonimizacion."
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('sl_obligaciones')
+                field: obligacion_id
+      - name: lote_id
+        description: "UUID de la captura confirmada seleccionada. No mezclar lotes para sumar obligaciones o movimientos."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('br_lote_confirmado')
+                field: lote_id
+      - name: capturado_en
+        description: "Inicio de captura UTC del ejecutor; no es emision efectiva ni tiempo historico del estado."
+        data_tests:
+          - not_null
+      - name: id_version
+        description: "Version del identificador HMAC protegido; no incluye su secreto."
+        data_tests:
+          - not_null
+      - name: n_movimientos
+        description: "Cantidad de todos los movimientos asociados en este lote, incluidos reversos y estados no interpretados. Cero si no hay movimientos."
+        data_tests:
+          - not_null
+      - name: n_totales_informados
+        description: "Conteo descriptivo; cero si no hay observaciones. No implica conciliacion financiera."
+        data_tests:
+          - not_null
+      - name: n_documentos_ab
+        description: "Conteo descriptivo; cero si no hay observaciones. No implica conciliacion financiera."
+        data_tests:
+          - not_null
+      - name: n_documentos_fa
+        description: "Conteo descriptivo; cero si no hay observaciones. No implica conciliacion financiera."
+        data_tests:
+          - not_null
+      - name: n_estado_f
+        description: "Conteo descriptivo; cero si no hay observaciones. No implica conciliacion financiera."
+        data_tests:
+          - not_null
+      - name: n_estado_a
+        description: "Conteo descriptivo; cero si no hay observaciones. No implica conciliacion financiera."
+        data_tests:
+          - not_null
+      - name: suma_total_movimientos_declarados
+        description: "Suma descriptiva declarada de todos los estados, NUMBER(38,2). NULL si no hay valores observados; no es pago neto ni se usa para calcular saldo."
+      - name: suma_principal_movimientos_declarados
+        description: "Suma descriptiva declarada de todos los estados, NUMBER(38,2). NULL si no hay valores observados; no es pago neto ni se usa para calcular saldo."
+      - name: suma_recargo_declarado
+        description: "Suma descriptiva declarada de todos los estados, NUMBER(38,2). NULL si no hay valores observados; no es pago neto ni se usa para calcular saldo."
+      - name: suma_descuento_declarado
+        description: "Suma descriptiva declarada de todos los estados, NUMBER(38,2). NULL si no hay valores observados; no es pago neto ni se usa para calcular saldo."
+      - name: suma_interes_mora_declarado
+        description: "Suma descriptiva declarada de todos los estados, NUMBER(38,2). NULL si no hay valores observados; no es pago neto ni se usa para calcular saldo."
+      - name: suma_costas_procesales_declaradas
+        description: "Suma descriptiva declarada de todos los estados, NUMBER(38,2). NULL si no hay valores observados; no es pago neto ni se usa para calcular saldo."
+      - name: fecha_primer_movimiento_declarada
+        description: "Extremo de las fechas de pago declaradas no nulas; no reconstruye historial ni orden intradiario."
+      - name: fecha_ultimo_movimiento_declarada
+        description: "Extremo de las fechas de pago declaradas no nulas; no reconstruye historial ni orden intradiario."
+  - name: dim_fecha
+    description: "Una fila por fecha observada y un miembro 0 para NULL; no es un calendario continuo ni corrige fechas anomalias."
+    columns:
+      - name: fecha_key
+        description: "Clave YYYYMMDD de fecha observada; 0 representa fecha NULL, sin imputarla."
+        data_tests:
+          - not_null
+          - unique
+      - name: fecha
+        description: "Dia observado; NULL solo en el miembro desconocido de clave 0."
+      - name: anio
+        description: "Atributo anio del lote seleccionado; conservar trazabilidad sin reinterpretar codigos."
+      - name: mes
+        description: "Atributo mes del lote seleccionado; conservar trazabilidad sin reinterpretar codigos."
+      - name: dia
+        description: "Atributo dia del lote seleccionado; conservar trazabilidad sin reinterpretar codigos."
+      - name: dia_semana_iso
+        description: "Atributo dia_semana_iso del lote seleccionado; conservar trazabilidad sin reinterpretar codigos."
+      - name: es_fecha_desconocida
+        description: "True solo para la fila tecnica de fecha desconocida."
+      - name: lote_id
+        description: "UUID de la captura confirmada seleccionada. No mezclar lotes para sumar obligaciones o movimientos."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('br_lote_confirmado')
+                field: lote_id
+      - name: capturado_en
+        description: "Inicio de captura UTC del ejecutor; no es emision efectiva ni tiempo historico del estado."
+        data_tests:
+          - not_null
+      - name: id_version
+        description: "Version del identificador HMAC protegido; no incluye su secreto."
+        data_tests:
+          - not_null
+  - name: dim_contexto_tributario
+    description: "Una combinacion distinta de origen y codigos literales. Sin etiquetas de negocio ni equivalencia entre estados de tablas distintas."
+    columns:
+      - name: contexto_key
+        description: "SHA-256 tecnico de combinacion ordenada de origen/codigos con nulos diferenciados. No se aplica a identificadores personales."
+        data_tests:
+          - not_null
+          - unique
+      - name: origen
+        description: "OBLIGACION o MOVIMIENTO: evita atribuir semantica comun a codigos de tablas distintas."
+      - name: estado_codigo
+        description: "Codigo literal actual. No se convierte automaticamente en pagado, pendiente o etiqueta predictiva."
+      - name: condicion_codigo
+        description: "Codigo literal sin catalogo universal validado; conservar nulos y valores originales."
+      - name: tipo_documento_codigo
+        description: "Codigo documental literal. AB y FA son categorias observadas; no justifican por si solos sumar pagos netos."
+      - name: tipo_movimiento_codigo
+        description: "Clasificacion literal del movimiento sin reinterpretacion general."
+      - name: lote_id
+        description: "UUID de la captura confirmada seleccionada. No mezclar lotes para sumar obligaciones o movimientos."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('br_lote_confirmado')
+                field: lote_id
+      - name: capturado_en
+        description: "Inicio de captura UTC del ejecutor; no es emision efectiva ni tiempo historico del estado."
+        data_tests:
+          - not_null
+      - name: id_version
+        description: "Version del identificador HMAC protegido; no incluye su secreto."
+        data_tests:
+          - not_null
+  - name: fct_obligaciones
+    description: "Hecho de obligaciones, una fila por id protegido del lote seleccionado. Valores declarados, sin etiquetas predictivas."
+    columns:
+      - name: obligacion_id
+        description: "HMAC estable de la PK completa. Identificador seudonimizado; no es anonimizacion. Origen: OBLIGACION_ID."
+        data_tests:
+          - not_null
+          - unique
+      - name: anio_fiscal
+        description: "Anio derivado de AVA_FECHA en el extractor; no sustituye fecha efectiva de emision. Origen: ANIO_FISCAL."
+      - name: importe_principal
+        description: "Origen IM_PRINCIPAL, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_solares
+        description: "Origen IM_SOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_medicina
+        description: "Origen IM_MEDICINA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_educacion
+        description: "Origen IM_EDUCACION, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_magisterio
+        description: "Origen IM_MAGISTERIO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_vivienda
+        description: "Origen IM_VIVIENDA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_bomberos
+        description: "Origen IM_BOMBEROS, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_escolares
+        description: "Origen IM_ESCOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_procesamiento
+        description: "Origen IM_PROCESAMIENTO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_basura
+        description: "Origen IM_BASURA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Su nombre no acredita una tasa de basura."
+      - name: importe_bordillo
+        description: "Origen IM_BORDILLO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_alcanta
+        description: "Origen IM_ALCANTA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_adoqui_nuevo
+        description: "Origen IM_ADOQUI_NUEVO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_ado_glob_2011
+        description: "Origen IM_ADO_GLOB_2011, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Semantica completa pendiente."
+      - name: total_obligacion_declarado
+        description: "IM_TOTAL observado en la captura actual. No acredita total originalmente emitido ni saldo historico. Origen: IM_TOTAL."
+      - name: fecha_emision_declarada
+        description: "Origen IM_FECHA_EMISION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_creacion_declarada
+        description: "Origen IM_FECHA_CREA, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_modificacion_declarada
+        description: "Origen IM_FECHA_ULTMODIFIC, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_pago_actual_declarada
+        description: "Origen IM_FECHA_PAGO, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_anulacion_declarada
+        description: "Origen IM_FECHA_ANULACION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: estado_codigo
+        description: "Codigo literal actual. No se convierte automaticamente en pagado, pendiente o etiqueta predictiva. Origen: IM_ESTADO."
+      - name: condicion_codigo
+        description: "Codigo literal sin catalogo universal validado; conservar nulos y valores originales. Origen: IM_CONDICION."
+      - name: tipo_documento_codigo
+        description: "Codigo documental literal. AB y FA son categorias observadas; no justifican por si solos sumar pagos netos. Origen: TIPO_DOC."
+      - name: lote_id
+        description: "UUID de la captura confirmada seleccionada. No mezclar lotes para sumar obligaciones o movimientos. Origen: LOTE_ID."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('br_lote_confirmado')
+                field: lote_id
+      - name: capturado_en
+        description: "Inicio de captura UTC del ejecutor; no es emision efectiva ni tiempo historico del estado. Origen: CAPTURADO_EN."
+        data_tests:
+          - not_null
+      - name: id_version
+        description: "Version del identificador HMAC protegido; no incluye su secreto. Origen: ID_VERSION."
+        data_tests:
+          - not_null
+      - name: dq_fecha_emision_nula
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: fecha_emision_declarada is null"
+      - name: dq_emision_pre1901
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(fecha_emision_declarada < '1901-01-01'::date,false)"
+      - name: dq_creacion_posterior_emision
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(fecha_creacion_declarada > fecha_emision_declarada,false)"
+      - name: dq_total_nulo
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: total_obligacion_declarado is null"
+      - name: dq_total_negativo
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(total_obligacion_declarado < 0,false)"
+      - name: dq_principal_negativo
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(importe_principal < 0,false)"
+      - name: dq_pago_posterior_captura
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(fecha_pago_actual_declarada > to_date(convert_timezone('UTC',capturado_en)),false)"
+      - name: dq_a_sin_fecha_anulacion
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(estado_codigo='A' and fecha_anulacion_declarada is null,false)"
+      - name: dq_f_con_fecha_anulacion
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(estado_codigo='F' and fecha_anulacion_declarada is not null,false)"
+      - name: contexto_key
+        description: "SHA-256 tecnico de combinacion ordenada de origen/codigos con nulos diferenciados. No se aplica a identificadores personales."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_contexto_tributario')
+                field: contexto_key
+      - name: fecha_emision_key
+        description: "FK de fecha de rol especifico hacia dim_fecha; 0 si la fecha declarada es NULL."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fecha')
+                field: fecha_key
+      - name: fecha_creacion_key
+        description: "FK de fecha de rol especifico hacia dim_fecha; 0 si la fecha declarada es NULL."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fecha')
+                field: fecha_key
+      - name: fecha_modificacion_key
+        description: "FK de fecha de rol especifico hacia dim_fecha; 0 si la fecha declarada es NULL."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fecha')
+                field: fecha_key
+      - name: fecha_pago_actual_key
+        description: "FK de fecha de rol especifico hacia dim_fecha; 0 si la fecha declarada es NULL."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fecha')
+                field: fecha_key
+      - name: fecha_anulacion_key
+        description: "FK de fecha de rol especifico hacia dim_fecha; 0 si la fecha declarada es NULL."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fecha')
+                field: fecha_key
+      - name: n_movimientos
+        description: "Cantidad de todos los movimientos asociados en este lote, incluidos reversos y estados no interpretados. Cero si no hay movimientos."
+        data_tests:
+          - not_null
+      - name: n_totales_informados
+        description: "Conteo descriptivo; cero si no hay observaciones. No implica conciliacion financiera."
+        data_tests:
+          - not_null
+      - name: n_documentos_ab
+        description: "Conteo descriptivo; cero si no hay observaciones. No implica conciliacion financiera."
+        data_tests:
+          - not_null
+      - name: n_documentos_fa
+        description: "Conteo descriptivo; cero si no hay observaciones. No implica conciliacion financiera."
+        data_tests:
+          - not_null
+      - name: n_estado_f
+        description: "Conteo descriptivo; cero si no hay observaciones. No implica conciliacion financiera."
+        data_tests:
+          - not_null
+      - name: n_estado_a
+        description: "Conteo descriptivo; cero si no hay observaciones. No implica conciliacion financiera."
+        data_tests:
+          - not_null
+      - name: suma_total_movimientos_declarados
+        description: "Suma descriptiva declarada de todos los estados, NUMBER(38,2). NULL si no hay valores observados; no es pago neto ni se usa para calcular saldo."
+      - name: suma_principal_movimientos_declarados
+        description: "Suma descriptiva declarada de todos los estados, NUMBER(38,2). NULL si no hay valores observados; no es pago neto ni se usa para calcular saldo."
+      - name: suma_recargo_declarado
+        description: "Suma descriptiva declarada de todos los estados, NUMBER(38,2). NULL si no hay valores observados; no es pago neto ni se usa para calcular saldo."
+      - name: suma_descuento_declarado
+        description: "Suma descriptiva declarada de todos los estados, NUMBER(38,2). NULL si no hay valores observados; no es pago neto ni se usa para calcular saldo."
+      - name: suma_interes_mora_declarado
+        description: "Suma descriptiva declarada de todos los estados, NUMBER(38,2). NULL si no hay valores observados; no es pago neto ni se usa para calcular saldo."
+      - name: suma_costas_procesales_declaradas
+        description: "Suma descriptiva declarada de todos los estados, NUMBER(38,2). NULL si no hay valores observados; no es pago neto ni se usa para calcular saldo."
+      - name: fecha_primer_movimiento_declarada
+        description: "Extremo de las fechas de pago declaradas no nulas; no reconstruye historial ni orden intradiario."
+      - name: fecha_ultimo_movimiento_declarada
+        description: "Extremo de las fechas de pago declaradas no nulas; no reconstruye historial ni orden intradiario."
+  - name: fct_movimientos
+    description: "Hecho de movimientos, una fila por id protegido del lote seleccionado. Valores declarados, sin etiquetas predictivas."
+    columns:
+      - name: movimiento_id
+        description: "HMAC estable de la PK completa del movimiento, incluidas fecha y hora locales originales. Origen: MOVIMIENTO_ID."
+        data_tests:
+          - not_null
+          - unique
+      - name: obligacion_id
+        description: "HMAC estable de la PK completa. Identificador seudonimizado; no es anonimizacion. Origen: OBLIGACION_ID."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('sl_obligaciones')
+                field: obligacion_id
+      - name: fecha_pago_declarada
+        description: "Origen IMP_FECHA_PAGO, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: importe_principal
+        description: "Origen IMP_PRINCIPAL, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_solares
+        description: "Origen IMP_SOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_medicina
+        description: "Origen IMP_MEDICINA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_educacion
+        description: "Origen IMP_EDUCACION, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_magisterio
+        description: "Origen IMP_MAGISTERIO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_vivienda
+        description: "Origen IMP_VIVIENDA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_bomberos
+        description: "Origen IMP_BOMBEROS, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_escolares
+        description: "Origen IMP_ESCOLARES, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_procesamiento
+        description: "Origen IMP_PROCESAMIENTO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_basura
+        description: "Origen IMP_BASURA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Su nombre no acredita una tasa de basura."
+      - name: importe_bordillo
+        description: "Origen IMP_BORDILLO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_alcanta
+        description: "Origen IMP_ALCANTA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_adoqui_nuevo
+        description: "Origen IMP_ADOQUI_NUEVO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: importe_ado_glob_2011
+        description: "Origen IMP_ADO_GLOB_2011, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos. Semantica completa pendiente."
+      - name: total_movimiento_declarado
+        description: "IMP_TOTAL declarado, de cualquier estado/documento. No equivale automaticamente a pago neto. Origen: IMP_TOTAL."
+      - name: recargo_declarado
+        description: "Origen IMP_RECARGO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: descuento_declarado
+        description: "Origen IMP_DESCUENTO, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: interes_mora_declarado
+        description: "Origen IMP_INT_MORA, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: costas_procesales_declaradas
+        description: "Origen COSTA_PROCESAL, componente monetario declarado NUMBER(16,2), sin modificar signo o nulos."
+      - name: saldo_declarado
+        description: "Saldo consignado en un movimiento. Medida NO aditiva; no sumar saldos entre movimientos. Origen: SALDO."
+      - name: fecha_emision_declarada
+        description: "Origen IMP_FECHA_EMISION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_creacion_declarada
+        description: "Origen IMP_FECHA_CREA, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_modificacion_declarada
+        description: "Origen IMP_FECHA_ULTMODIFIC, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_anulacion_declarada
+        description: "Origen IMP_FECHA_ANULACION, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: fecha_proceso_declarada
+        description: "Origen FECHA_PROCESO, fecha diaria declarada, no certificada como instante efectivo de negocio. NULL se conserva."
+      - name: estado_codigo
+        description: "Codigo literal actual. No se convierte automaticamente en pagado, pendiente o etiqueta predictiva. Origen: IMP_ESTADO."
+      - name: condicion_codigo
+        description: "Codigo literal sin catalogo universal validado; conservar nulos y valores originales. Origen: IMP_CONDICION."
+      - name: tipo_movimiento_codigo
+        description: "Clasificacion literal del movimiento sin reinterpretacion general. Origen: IMP_TIPO."
+      - name: tipo_documento_codigo
+        description: "Codigo documental literal. AB y FA son categorias observadas; no justifican por si solos sumar pagos netos. Origen: TIPO_DOC."
+      - name: lote_id
+        description: "UUID de la captura confirmada seleccionada. No mezclar lotes para sumar obligaciones o movimientos. Origen: LOTE_ID."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('br_lote_confirmado')
+                field: lote_id
+      - name: capturado_en
+        description: "Inicio de captura UTC del ejecutor; no es emision efectiva ni tiempo historico del estado. Origen: CAPTURADO_EN."
+        data_tests:
+          - not_null
+      - name: id_version
+        description: "Version del identificador HMAC protegido; no incluye su secreto. Origen: ID_VERSION."
+        data_tests:
+          - not_null
+      - name: dq_fecha_pago_nula
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: fecha_pago_declarada is null"
+      - name: dq_pago_anterior_emision
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(fecha_pago_declarada < fecha_emision_declarada,false)"
+      - name: dq_pago_posterior_captura
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(fecha_pago_declarada > to_date(convert_timezone('UTC',capturado_en)),false)"
+      - name: dq_fecha_proceso_nula
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: fecha_proceso_declarada is null"
+      - name: dq_total_nulo
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: total_movimiento_declarado is null"
+      - name: dq_total_negativo
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(total_movimiento_declarado < 0,false)"
+      - name: dq_a_sin_fecha_anulacion
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(estado_codigo='A' and fecha_anulacion_declarada is null,false)"
+      - name: dq_f_con_fecha_anulacion
+        description: "Indicador de observacion de calidad, no correccion ni filtro. Expresion: coalesce(estado_codigo='F' and fecha_anulacion_declarada is not null,false)"
+      - name: contexto_key
+        description: "SHA-256 tecnico de combinacion ordenada de origen/codigos con nulos diferenciados. No se aplica a identificadores personales."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_contexto_tributario')
+                field: contexto_key
+      - name: fecha_pago_key
+        description: "FK de fecha de rol especifico hacia dim_fecha; 0 si la fecha declarada es NULL."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fecha')
+                field: fecha_key
+      - name: fecha_emision_key
+        description: "FK de fecha de rol especifico hacia dim_fecha; 0 si la fecha declarada es NULL."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fecha')
+                field: fecha_key
+      - name: fecha_creacion_key
+        description: "FK de fecha de rol especifico hacia dim_fecha; 0 si la fecha declarada es NULL."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fecha')
+                field: fecha_key
+      - name: fecha_modificacion_key
+        description: "FK de fecha de rol especifico hacia dim_fecha; 0 si la fecha declarada es NULL."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fecha')
+                field: fecha_key
+      - name: fecha_anulacion_key
+        description: "FK de fecha de rol especifico hacia dim_fecha; 0 si la fecha declarada es NULL."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fecha')
+                field: fecha_key
+      - name: fecha_proceso_key
+        description: "FK de fecha de rol especifico hacia dim_fecha; 0 si la fecha declarada es NULL."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_fecha')
+                field: fecha_key
