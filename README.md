@@ -1,5 +1,31 @@
 # PSet #2 — Impuestos prediales urbanos de Cayambe
 
+## Contexto académico, confidencialidad y alcance
+
+El proyecto original se desarrolló utilizando una instancia de pruebas de
+SQL Server del Municipio de Cayambe. Aunque es una base de pruebas, contiene
+información real de contribuyentes y obligaciones tributarias. Por
+confidencialidad, privacidad y seguridad institucional, el repositorio público
+no incluye registros originales, extracciones, respaldos ni credenciales
+municipales. La seudonimización mediante HMAC del pipeline original **no equivale
+a anonimización irreversible**: la vinculación estable y los cruces de fechas
+e importes mantienen riesgos de reidentificación.
+
+Para facilitar la evaluación académica sin acceso a la infraestructura municipal,
+se implementó una demostración adicional con registros completamente ficticios,
+generados de manera determinista. Conservan el contrato de columnas necesario
+para probar las transformaciones, pero no representan ni reproducen registros
+de contribuyentes reales. Los identificadores sintéticos se calculan con SHA-256
+sobre etiquetas públicas inventadas; no provienen de HMAC de registros reales.
+La demo no necesita VPN, usuario municipal ni conexión con el SQL Server original.
+Complementa la implementación real, pero **no sustituye ni demuestra la
+extracción desde SQL Server**.
+
+Las instrucciones municipales históricas de este README se conservan como
+documentación de esa implementación. Para evaluar exclusivamente con datos
+ficticios, seguir [demo/README.md](demo/README.md), sin iniciar el worker municipal
+ni los Flows de ingesta o backfill.
+
 ## Evidencia final de la demostración sintética — 15 de noviembre de 2026
 
 La demo **comienza en Kestra con datos ficticios; no comienza en SQL Server**.
@@ -76,7 +102,7 @@ demostracion acotada, clasificacion de errores, evidencia y limites temporales.
 Usa Loop y fromJson de Kestra 2, de acuerdo con la
 [guia oficial](https://kestra.io/docs/migration-guide/v2.0.0/foreach-loop).
 
-## Configuracion y demostracion manual
+## Configuracion y demostracion manual del flujo municipal original
 
 Trabajar desde este pset_2 existente. No crear otra copia.
 
@@ -111,7 +137,7 @@ No se monta una clave ni un socket Docker en Kestra para resolverlo.
 | kestra | kestra/kestra:v2.0.9 | Orquestador; 127.0.0.1:8080 configurable |
 | spark | apache/spark:3.5.8-scala2.12-java17-python3-ubuntu | Runtime PySpark local; sin puerto publicado |
 
-Requisitos: Windows, PowerShell 5.1 para el worker, Docker Desktop con
+Requisitos del flujo municipal original: Windows, PowerShell 5.1 para el worker, Docker Desktop con
 contenedores Linux y Compose v2, VPN, .NET System.Data.SqlClient y entornos
 Python ya preparados. El worker/host usa snowflake-connector-python 5.2.0.
 dbt usa .venv-dbt separada: dbt-core 1.11.11 y dbt-snowflake 1.11.3.
@@ -198,5 +224,42 @@ original del flujo municipal documentada arriba. La demo reutilizó la cuenta
 y el usuario de servicio del estudiante con una base exclusiva:
 `PSET2_DEMO_SINTETICO`. Para reproducirla, el docente debe configurar su propia
 cuenta Snowflake y el entorno descrito en la guía; no basta con clonar el repositorio.
+
+## Auditoría documental de reproducibilidad — 16 de noviembre de 2026
+
+La revisión de lectura contrastó ambos README con `demo/preparar_base_demo.sql`,
+`kestra/flows/demo_sintetico_raw.yml`, `dbt/profiles.yml`,
+`dbt/macros/lote_y_destino.sql`, `spark/Run-OBT.ps1`, `spark/publish_obt.py`,
+Compose y sus configuraciones públicas auxiliares. No se ejecutaron pruebas,
+builds, lint ni ingestas, ni se inspeccionaron archivos privados.
+
+**La reproducción en una cuenta Snowflake diferente no está demostrada.** El
+código permite declarar otra cuenta en modo sintético, pero exige preparación
+manual y adaptación de la conexión de Kestra. La guía de demo documenta:
+
+- Creación previa de `PSET2_PIPELINE_SVC`, `PSET2_PIPELINE_ROLE` y `COMPUTE_WH`,
+  registro de una clave pública propia y permisos administrativos de preparación.
+  El SQL de demo solo prepara la base, los esquemas y las tablas; no crea esos
+  usuarios, roles ni warehouse.
+- Nombres exactos obligatorios en dbt/Spark, opt-in sintético explícito y
+  adaptación de las cuatro URL JDBC del Flow a la cuenta del docente.
+- Instalación local, secretos privados de Kestra, `.runtime` con ACL restringidas,
+  ejecución manual de dbt/Spark y controles agregados sobre las 10 filas OBT.
+
+La evidencia de éxito del 15 de noviembre corresponde a la cuenta del estudiante.
+La conectividad, los permisos efectivos, la autenticación y las dependencias del
+entorno del profesor deben validarse allí antes de afirmar reproducibilidad.
+El puente Spark es local a Windows/Docker Desktop, acotado y sin mutex
+distribuido; no ejecutar publicadores ni builds concurrentes.
+
+La revisión no certifica la ausencia de información sensible en todo el repositorio
+o su historial. Persisten referencias operativas del entorno municipal en
+`ingesta/Start-Worker.ps1` y `docs/ingesta_raw.md`; no se reproducen sus valores
+aquí y no son necesarias para la demo. Su revisión para difusión institucional
+queda fuera de esta actualización limitada a dos README. El informe histórico
+`demo/AUDITORIA_PREPUBLICACION.md` describe una revisión preliminar de un ZIP:
+sus pendientes de ejecución sintética quedan actualizados por la evidencia final
+anterior, pero sus observaciones de privacidad no constituyen una autorización
+de publicación ni quedan resueltas por el éxito de la demo.
 
 
