@@ -1,0 +1,3 @@
+# Kestra ejecuta estos scripts con Bash Linux desde un checkout Windows.
+# Evitar CRLF aunque el equipo que clone use core.autocrlf=true.
+ingesta/*.sh text eol=lf

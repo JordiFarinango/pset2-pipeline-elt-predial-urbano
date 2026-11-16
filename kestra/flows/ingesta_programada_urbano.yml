@@ -1,0 +1,38 @@
+# PROPUESTA INACTIVA. No importar/activar para extraer sin autorizacion institucional.
+# Plan fijo acotado: repetir conserva UUID y reutiliza lotes confirmados.
+id: ingesta_programada_urbano
+namespace: usfq.pset2
+description: Calendario optativo para un plan fiscal autorizado; deshabilitado y sin carga por defecto.
+
+concurrency:
+  limit: 1
+  behavior: QUEUE
+
+variables:
+  # Copiar un plan revisado: UUID,YYYY-MM-DD,YYYY-MM-DD,limite (hasta exclusiva).
+  # Vacio falla la validacion sin solicitar una extraccion.
+  plan_autorizado: ""
+  ejecutar: false
+  confirmacion: PLANIFICAR
+
+tasks:
+  - id: plan_acotado
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: usfq.pset2
+    flowId: backfill_raw_urbano
+    wait: true
+    transmitFailed: true
+    inputs:
+      plan: "{{ vars.plan_autorizado }}"
+      ejecutar: "{{ vars.ejecutar }}"
+      confirmacion: "{{ vars.confirmacion }}"
+
+triggers:
+  - id: semanal_autorizado
+    type: io.kestra.plugin.core.trigger.Schedule
+    disabled: true
+    # Propuesta: lunes, 03:00 de Ecuador continental. Cambiar solo bajo revision.
+    cron: "0 3 * * 1"
+    timezone: America/Guayaquil
+    recoverMissedSchedules: NONE
+    allowConcurrent: false

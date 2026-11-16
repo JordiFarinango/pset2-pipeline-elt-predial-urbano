@@ -1,5 +1,15 @@
 # Orquestacion, reintentos y backfill de demostracion
 
+Actualización estática del 16 de noviembre de 2026: se conserva el protocolo de
+retry y backfill descrito aquí. Se añade por separado
+`kestra/flows/ingesta_programada_urbano.yml`, con Schedule semanal deshabilitado,
+plan vacío y `ejecutar=false`. No se importó ni activó. Sus condiciones de
+autorización, dependencias, límites y pendientes se describen en el README
+principal. Las referencias siguientes a ausencia de calendario corresponden
+a los Flows originales; estos continúan sin trigger propio. La importación de
+ingesta/backfill y la planificación sin carga fueron comunicadas posteriormente
+como exitosas; no validan retries transitorios ni backfill con extracción real.
+
 15 de noviembre de 2026. Cambios preparados mediante lectura y edicion de codigo.
 No se importaron Flows, reiniciaron servicios ni ejecutaron pruebas o cargas.
 Los resultados existentes siguientes fueron comunicados por el responsable;

@@ -53,8 +53,8 @@ orquestación integral automática.
   0 duplicados, 0 diferencias de importes y agregados.
 
 Los resultados reales verificados fueron comunicados por el responsable.
-Esta actualización es documental: no se ejecutaron pruebas, builds ni nuevas
-ingestas. La evidencia sintética no demuestra la extracción desde SQL Server
+Durante esta auditoría no se ejecutaron pruebas, builds ni nuevas ingestas.
+Los auxiliares nuevos solo se revisaron estáticamente. La evidencia sintética no demuestra la extracción desde SQL Server
 ni sustituye la evidencia original del flujo municipal.
 
 ## Requisitos y preparación de una cuenta propia
@@ -63,6 +63,16 @@ Esta guía procede de una auditoría de lectura del 16 de noviembre de 2026.
 No es evidencia de una instalación desde cero ni de ejecución en otra cuenta.
 Los comandos siguientes son instrucciones para una reproducción futura;
 no se ejecutaron durante la auditoría.
+
+| Estado | Alcance |
+|---|---|
+| Implementado y validado previamente | Flow `demo_sintetico_raw` y recorrido RAW → dbt → PySpark → OBT en la cuenta del estudiante, con la evidencia anterior |
+| Implementado y revisado estáticamente, sin ejecución | Preparación opcional `preparar_cuenta_demo.sql` y generación `--profesor` de un Flow separado con JDBC propio; no cambian los modelos ni el Flow validado |
+| Pendiente de comprobación real | Instalación limpia, configuración de permisos/claves/secretos y plugin JDBC en otro ordenador/cuenta; importación y recorrido completo del Flow del profesor |
+
+La programación municipal optativa descrita en el README principal no forma
+parte de esta demo. Permanece deshabilitada; no importar ni habilitarla para
+evaluar datos ficticios.
 
 ### Entorno local
 
@@ -114,10 +124,16 @@ funcionales fuera del alcance de esta entrega.
 Como referencia administrativa, `../docs/snowflake_setup.sql` documenta creación
 de rol, warehouse, usuario y registro separado de clave pública para el entorno
 original. **No ejecutar ese archivo completo para la demo**: también crea y
-concede acceso a `PSET2_CAYAMBE`. El administrador debe preparar únicamente los
-objetos compartidos indicados arriba en su propia cuenta, asignar el rol al
-usuario de servicio y conceder `USAGE` sobre `COMPUTE_WH`.
-Debe poder asumir `PSET2_PIPELINE_ROLE` para completar el SQL de demo.
+concede acceso a `PSET2_CAYAMBE`.
+
+En su lugar, el administrador puede revisar y ejecutar manualmente
+[`preparar_cuenta_demo.sql`](preparar_cuenta_demo.sql) **solo en su propia cuenta**.
+Es un auxiliar nuevo, no ejecutado en esta auditoría: crea el rol, el warehouse
+y el usuario de servicio si faltan; concede el rol al usuario, `USAGE` sobre el
+warehouse y el rol funcional a la jerarquía `SYSADMIN` para preparar las tablas.
+No crea ni consulta `PSET2_CAYAMBE`. No reconfigurar con él la cuenta ya operativa
+del estudiante. Si los objetos ya existen, el administrador debe revisar sus
+propiedades y políticas; `IF NOT EXISTS` no los corrige.
 
 Registrar una clave pública propia en el usuario de servicio mediante el
 mecanismo de autenticación admitido en su cuenta, conservando la clave privada
@@ -142,7 +158,10 @@ no existe una plantilla con valores: debe prepararse de forma privada.
 El Flow referencia `secret('SNOWFLAKE_PRIVATE_KEY')` y
 `secret('SNOWFLAKE_PRIVATE_KEY_PASSWORD')`. En el despliegue local por variables
 de entorno, preparar las entradas `SECRET_SNOWFLAKE_PRIVATE_KEY` y
-`SECRET_SNOWFLAKE_PRIVATE_KEY_PASSWORD` en `.env.kestra.secrets` con la
+`SECRET_SNOWFLAKE_PRIVATE_KEY_PASSWORD` en `.env.kestra.secrets`. Para el Flow
+del profesor preparar también `SECRET_SNOWFLAKE_JDBC_URL`: debe contener su
+propia URL `jdbc:snowflake://<endpoint-propio>` sin usuario, contraseña ni otros
+secretos en la URL. Codificar los tres valores con la
 codificación Base64 que espera Kestra, preservando los saltos de línea de la
 clave privada PEM cifrada dentro del valor decodificado. Cada valor Base64 debe
 ocupar una sola línea del archivo de entorno, según la
@@ -152,13 +171,14 @@ de la clave usada por dbt no satisface `privateKey` del Flow. Verificar la
 resolución de secretos en la instalación propia; no registrar valores ni
 comandos que los expongan en el historial. La auditoría no leyó esos archivos.
 
-En una copia local del Flow para importar al Kestra del profesor, adaptar las
-**cuatro** URL `jdbc:snowflake://...` a su endpoint Snowflake. El YAML versionado
-contiene la cuenta del estudiante codificada en esas cuatro tareas; no consume
-`PSET2_DEMO_ACCOUNT`. Conservar en todas `username: PSET2_PIPELINE_SVC`,
+El YAML validado `kestra/flows/demo_sintetico_raw.yml` conserva sin cambios las
+cuatro URL de la cuenta del estudiante; no consume `PSET2_DEMO_ACCOUNT`.
+Para otra cuenta usar el modo `--profesor` descrito abajo, que genera las cuatro
+conexiones mediante `secret('SNOWFLAKE_JDBC_URL')` sin cuenta por defecto.
+Conserva en todas `username: PSET2_PIPELINE_SVC`,
 `role: PSET2_PIPELINE_ROLE`, `warehouse: COMPUTE_WH` y
-`database: PSET2_DEMO_SINTETICO`. Conservar también las referencias SQL completas
-a esa base y el UUID sintético. No importar ni ejecutar los Flows municipales.
+`database: PSET2_DEMO_SINTETICO`, las referencias SQL completas a esa base y
+el UUID sintético. No importar ni ejecutar los Flows municipales.
 
 Para un entorno nuevo, levantar solo el Compose base, sin el override municipal:
 
@@ -168,8 +188,8 @@ docker compose --env-file .env -f docker-compose.yml ps
 ```
 
 En `http://127.0.0.1:8080/` (o el puerto configurado), iniciar sesión con las
-credenciales locales e importar la copia adaptada como Flow
-`usfq.pset2.demo_sintetico_raw`. Ejecutarlo desde la interfaz y revisar sus cinco
+credenciales locales e importar el archivo generado abajo como Flow
+`usfq.pset2.demo_sintetico_profesor`. Ejecutarlo desde la interfaz y revisar sus cinco
 tareas y `outputs.comprobar_lote_sintetico.row`: se espera `ESTADO=OK`,
 10 obligaciones, 6 movimientos, 1 lote y 0 huérfanos. La quinta tarea exige esos
 conteos. Iniciar Compose no ejecuta el Flow ni el trabajo Spark.
@@ -188,10 +208,32 @@ No ejecutarlo para alterar un entorno municipal activo. No compartir `.runtime`
 ni ampliar sus ACL para evitar un error. El override `docker-compose.ingesta.yml`
 y sus montajes del puente municipal no son necesarios para la demo.
 
+Después de preparar `.runtime`, generar **solo el archivo local** del profesor:
+
+```powershell
+py -3.12 .\demo\generar_flow_sintetico.py --profesor
+```
+
+El auxiliar no abre conexiones, no lee secretos, no inicia servicios ni ejecuta
+SQL: escribe `.runtime/demo_sintetico_profesor.yml` con id separado
+`demo_sintetico_profesor`. Su SQL usa el mismo contrato/dataset sintético y las
+cinco tareas; exige los tres secretos propios de Kestra y no sobrescribe el
+Flow versionado ni un archivo local preexistente. Si ya existe una copia,
+revisarla antes de decidir regenerarla. `.runtime` está excluida de Git.
+El auxiliar comprueba existencia de la carpeta; la protección ACL se prepara
+con `Prepare-Bridge.ps1` y la valida el lanzador de Spark, no el generador.
+
+El modo sin `--profesor` se reserva al mantenimiento del Flow original y sí
+escribe `kestra/flows/demo_sintetico_raw.yml`; no usarlo para configurar otra
+cuenta. Se corrigió por lectura la divergencia previa entre la URL del generador
+y la del YAML validado. No se ejecutó el generador ni su verificador offline
+durante esta auditoría. La variante del profesor aún necesita importación y
+validación reales; no ejecutar ambos Flows simultáneamente contra la misma base.
+
 ## Secuencia manual de ejecución
 
 1. Completar la preparación de Snowflake y ejecutar el SQL de demo como se describe arriba. No consulta las tablas municipales.
-2. Importar y ejecutar el Flow adaptado en Kestra, comprobar SUCCESS y los conteos indicados. Repetir el mismo Flow es una comprobación opcional de idempotencia, no una condición para continuar.
+2. Importar únicamente `.runtime/demo_sintetico_profesor.yml` en el Kestra propio y ejecutar `demo_sintetico_profesor`, comprobar SUCCESS y los conteos indicados. Repetir el mismo Flow es una comprobación opcional de idempotencia, no una condición para continuar. El estudiante conserva su Flow original ya validado.
 3. En **PowerShell nueva sesión**, desde la raíz del proyecto, indicar la cuenta propia y configurar la sesión privada. En la ejecución validada ambas variables de cuenta correspondían a la cuenta del estudiante; aquí se solicitan para evitar reutilizarla por accidente:
 
 ```powershell
@@ -263,7 +305,7 @@ estos resultados finales.
 - Demo comienza en Kestra, que genera SQL de datos sintéticos; no extrae SQL Server ficticio y no se debe presentar como origen SQL Server → Kestra.
 - Este paquete añade guardarraíl: dbt y Spark exigen `PSET2_SYNTHETIC_DEMO` y base `PSET2_DEMO_SINTETICO`. En modo original siguen usando `PSET2_CAYAMBE`. La cuenta puede ser la misma; los datos se aíslan por base.
 - El Flow apunta explícitamente a la base sintética. dbt y Spark solo seleccionan esa base cuando `PSET2_SYNTHETIC_DEMO=I_ACKNOWLEDGE_SYNTHETIC`; además exigen que `DBT_SNOWFLAKE_ACCOUNT` coincida con `PSET2_DEMO_ACCOUNT`. Sin ese opt-in el código selecciona el contrato municipal original, por lo que debe verificarse la sesión antes de ejecutar. No cargar `dbt/environment.example.ps1` ni `spark/config.obt.example.ps1` para esta demo: sus valores corresponden al destino original.
-- El repositorio no da acceso a la cuenta del estudiante. Otra cuenta exige configurar los objetos con los nombres exactos, la clave pública/privada propia, secretos de Kestra y las cuatro URL JDBC. La lectura del código permite describir esa adaptación, pero no demuestra que haya funcionado en otra cuenta.
+- El repositorio no da acceso a la cuenta del estudiante. Otra cuenta exige configurar los objetos con los nombres exactos, la clave pública/privada propia y los tres secretos de Kestra, incluido su JDBC. El modo `--profesor` elimina la edición repetida de cuatro URL. La lectura del código permite describir esa adaptación, pero no demuestra que haya funcionado en otra cuenta.
 - Un solo publicador por host/proyecto; no existe mutex distribuido y Snowflake no impone unicidad en tablas estándar. Evitar builds/publicaciones simultáneos. Los MERGE de RAW solo insertan ausentes; no reparan filas existentes alteradas. Las tareas JDBC son separadas, sin una transacción única para todo el Flow.
 - Es una muestra técnica de 10/6, sin representatividad estadística, cobertura histórica ni validación predictiva. La repetición de la demo y la instalación desde cero en otra cuenta no se acreditan por los resultados aportados. El WARN `observaciones_calidad` permanece visible.
 - No distribuir `.env`, `.env.kestra.secrets`, claves, passphrases ni `.runtime`; no mostrar entornos o logs expandidos. La auditoría es de lectura y no certifica la ausencia de información sensible en todo el historial. Las referencias operativas municipales señaladas en el README principal requieren revisión institucional separada; no son necesarias para evaluar esta demo.

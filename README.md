@@ -42,7 +42,7 @@ Después se ejecutan **dbt y PySpark manualmente, en ese orden**, para el lote
 | PySpark | SUCCESS, 10 filas OBT, 6 movimientos, 0 identificadores nulos, 0 duplicados, 0 diferencias de importes y agregados |
 
 Estos resultados verificados fueron comunicados por el responsable. No se
-ejecutaron pruebas, builds ni nuevas ingestas para esta actualización documental.
+ejecutaron pruebas, builds ni nuevas ingestas durante esta auditoría.
 La advertencia se conserva; esta evidencia acredita la demo sintética, no la
 extracción municipal ni una orquestación integral automática.
 La ejecución manual y sus requisitos se detallan en [demo/README.md](demo/README.md).
@@ -76,6 +76,50 @@ SQL Server -> Kestra -> Snowflake Raw -> dbt Bronze -> dbt Silver
 Kestra automatiza la solicitud, espera y comprobacion de la ingesta mediante
 el worker Windows. dbt y Spark se ejecutan MANUALMENTE y en ese orden.
 No existe una orquestacion integral automatica validada.
+
+## Programación optativa de ingesta: deshabilitada
+
+Los Flows originales de ingesta y backfill no tienen trigger. Se añade por
+separado [ingesta_programada_urbano.yml](kestra/flows/ingesta_programada_urbano.yml),
+con `io.kestra.plugin.core.trigger.Schedule`, preparado según la sintaxis de
+Kestra 2 para la instalación 2.0.9. **No se importó ni ejecutó este Flow**.
+El trigger tiene `disabled: true`; además, `ejecutar: false`,
+`confirmacion: PLANIFICAR` y el plan vacío impiden solicitar extracciones con
+la configuración entregada, incluso si se ejecuta el Flow manualmente.
+
+La frecuencia propuesta es semanal, los lunes a las 03:00 de
+`America/Guayaquil` (`cron: "0 3 * * 1"`). El cron y el plan son configurables
+en una revisión local autorizada. `recoverMissedSchedules: NONE` evita recuperar
+automáticamente calendarios perdidos; `allowConcurrent: false` impide solapar
+disparos del calendario. El Flow delega en el backfill validado por parámetros,
+con espera del hijo y propagación de fallos; no incorpora extracción nueva.
+
+Para una futura habilitación se requiere autorización institucional explícita
+para procesar información real, revisión del plan completo y de la frecuencia,
+aceptación del YAML en Kestra 2.0.9 y disponibilidad de Docker Desktop,
+PostgreSQL/Kestra, VPN y worker Windows armado con sus secretos privados y los
+montajes de `docker-compose.ingesta.yml`. No basta con que los contenedores
+estén iniciados: el worker interactivo debe permanecer activo y el ordenador
+no debe suspenderse. Antes de habilitar, limitar su sesión a
+`PSET2_MAX_OBLIGACIONES=10` y `PSET2_MAX_MOVIMIENTOS=100` como describe la guía
+de orquestación. Kestra no verifica esas variables privadas del worker.
+
+El operador debe proporcionar `plan_autorizado` (hasta tres períodos de 31 días,
+1–10 obligaciones por período, hasta 30 en total), revisar primero con
+`ejecutar: false` y, solo con autorización, cambiar `ejecutar: true`,
+`confirmacion: EJECUTAR_MUESTRA` y `disabled: false`. Con esos topes locales son
+como máximo 100 movimientos por período; un exceso falla sin recortarlos.
+No se efectuó ninguno de esos cambios en la instalación activa.
+
+El plan es **fijo**, con UUID explícitos: repetirlo reutiliza los lotes confirmados,
+no crea capturas nuevas ni un histórico incremental. Para otro rango o una nueva
+captura se requiere revisar y autorizar otro plan/UUID; no se generan lotes
+ilimitados por reloj. El calendario tampoco ejecuta dbt o Spark. La activación
+municipal y una política de ventanas móviles quedan sujetas a autorización y
+comprobación real, por el riesgo de extraer datos de contribuyentes.
+
+Referencias: [Schedule](https://kestra.io/plugins/core/trigger/io.kestra.plugin.core.trigger.schedule)
+y [trigger deshabilitado](https://kestra.io/docs/workflow-components/disabled).
 
 ## Kestra: reintentos y backfill preparados
 
@@ -225,24 +269,56 @@ y el usuario de servicio del estudiante con una base exclusiva:
 `PSET2_DEMO_SINTETICO`. Para reproducirla, el docente debe configurar su propia
 cuenta Snowflake y el entorno descrito en la guía; no basta con clonar el repositorio.
 
-## Auditoría documental de reproducibilidad — 16 de noviembre de 2026
+## Auditoría final de los tres requisitos — 16 de noviembre de 2026
 
 La revisión de lectura contrastó ambos README con `demo/preparar_base_demo.sql`,
 `kestra/flows/demo_sintetico_raw.yml`, `dbt/profiles.yml`,
 `dbt/macros/lote_y_destino.sql`, `spark/Run-OBT.ps1`, `spark/publish_obt.py`,
-Compose y sus configuraciones públicas auxiliares. No se ejecutaron pruebas,
-builds, lint ni ingestas, ni se inspeccionaron archivos privados.
+Compose y sus configuraciones públicas auxiliares. También se revisaron los
+Flows municipales, `submit.sh`, `validate_backfill.sh`, `Start-Worker.ps1`,
+`load_raw.py` y el generador sintético. No se ejecutaron pruebas, builds, lint,
+ingestas, backfills o despliegues, ni se inspeccionaron archivos privados.
+
+| Requisito | Implementado y validado previamente | Implementado y revisado estáticamente, no ejecutado | Pendiente real |
+|---|---|---|---|
+| Trigger/frecuencia | Ingesta manual exitosa; no había trigger | Flow de calendario separado, semanal, deshabilitado, sin recuperación de horarios perdidos y con plan fijo sujeto a autorización | Importación en 2.0.9, disparo programado y dependencias operativas; no hay ingesta periódica validada |
+| Errores/retries/backfill | Reutilización del lote municipal; importación de Flows y planificación sin carga comunicadas | Retry exponencial existente y su guardia de respuesta terminal; plan con fechas/cantidades acotadas y períodos seriales, conservados sin cambios funcionales | Fallo transitorio real, rechazo de errores permanentes/ambiguos, backfill real autorizado y recuperación tras interrupción |
+| Reproducción sintética | Recorrido completo en la cuenta del estudiante, según resultados anteriores | Modo `--profesor` separado, preparación administrativa solo de demo y finales LF para scripts Bash | Instalación desde cero, secretos/JDBC/permisos y ejecución completa en otro ordenador/cuenta |
+
+No se halló un defecto demostrable que justificara alterar la política de retries
+o el procesamiento del backfill. Se conserva el máximo de tres intentos
+(`-a0/-a1/-a2`) y la condición `SQL_TRANSITORIO` + `retryable=true` del resultado
+anterior antes de crear otra solicitud. Un fallo de infraestructura puede
+reintentar la tarea de transporte, pero sin esa confirmación no autoriza otra
+extracción. El worker cierra lector/conexión y termina el hijo antes de publicar
+el fallo; el cargador exige marcador final para confirmar y reconcilia el ledger
+antes de releer SQL Server. Estas son garantías por lectura, no pruebas nuevas.
+Se conservan UUID, filtros, límite y contrato; no se cambian secretos, TLS ni topes.
+
+El backfill comprueba el plan completo antes de cualquier hijo: UUID distintos,
+fechas canónicas de 1900 a 2100, rangos ordenados/disjuntos de hasta 31 días,
+1–10 obligaciones por período y hasta tres períodos/30 obligaciones.
+`ejecutar=false` es el valor por defecto; la carga exige además
+`EJECUTAR_MUESTRA`. `Loop.concurrencyLimit=1`, `wait=true`,
+`transmitFailed=true` y la cola de ingesta mantienen procesamiento serial.
+No hay un bloqueo distribuido: se conserva la restricción de un único worker.
+
+Se añade `.gitattributes` para conservar LF en `ingesta/*.sh` al clonar en
+Windows con `core.autocrlf=true`: CRLF impediría ejecutar correctamente Bash
+en el contenedor. No se cambia el contenido de esos scripts. El generador
+sintético tenía una URL por secreto distinta del Flow validado; se alinea el modo
+original y se añade `--profesor` con Flow/archivo separados, sin ejecutar el generador.
 
 **La reproducción en una cuenta Snowflake diferente no está demostrada.** El
 código permite declarar otra cuenta en modo sintético, pero exige preparación
 manual y adaptación de la conexión de Kestra. La guía de demo documenta:
 
-- Creación previa de `PSET2_PIPELINE_SVC`, `PSET2_PIPELINE_ROLE` y `COMPUTE_WH`,
-  registro de una clave pública propia y permisos administrativos de preparación.
-  El SQL de demo solo prepara la base, los esquemas y las tablas; no crea esos
-  usuarios, roles ni warehouse.
-- Nombres exactos obligatorios en dbt/Spark, opt-in sintético explícito y
-  adaptación de las cuatro URL JDBC del Flow a la cuenta del docente.
+- `demo/preparar_cuenta_demo.sql` prepara opcionalmente el usuario/rol/warehouse
+  en una cuenta propia nueva; la clave pública se registra por separado.
+  `demo/preparar_base_demo.sql` conserva la preparación de base/esquemas/tablas.
+- Nombres exactos obligatorios en dbt/Spark y opt-in sintético explícito. El modo
+  `--profesor` usa `SNOWFLAKE_JDBC_URL` en las cuatro tareas, sin cuenta personal
+  por defecto; no modifica el Flow sintético ya validado.
 - Instalación local, secretos privados de Kestra, `.runtime` con ACL restringidas,
   ejecución manual de dbt/Spark y controles agregados sobre las 10 filas OBT.
 
@@ -256,7 +332,7 @@ La revisión no certifica la ausencia de información sensible en todo el reposi
 o su historial. Persisten referencias operativas del entorno municipal en
 `ingesta/Start-Worker.ps1` y `docs/ingesta_raw.md`; no se reproducen sus valores
 aquí y no son necesarias para la demo. Su revisión para difusión institucional
-queda fuera de esta actualización limitada a dos README. El informe histórico
+queda fuera del alcance de estas correcciones de orquestación y demo. El informe histórico
 `demo/AUDITORIA_PREPUBLICACION.md` describe una revisión preliminar de un ZIP:
 sus pendientes de ejecución sintética quedan actualizados por la evidencia final
 anterior, pero sus observaciones de privacidad no constituyen una autorización

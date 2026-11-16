@@ -5,6 +5,7 @@ No conecta con SQL Server, Snowflake, Kestra ni la red. No produce datos reales.
 La generación es determinista y compatible con ingesta/contract.json y Raw.
 """
 from pathlib import Path
+import argparse
 import json
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -150,9 +151,13 @@ SELECT
 ) AS c"""
 
 
-def render():
+def render(profesor=False):
+    # El modo original reproduce la URL del Flow ya validado. El modo profesor
+    # exige su propio secreto JDBC, sin valor por defecto de ninguna cuenta.
+    url = ('"{{ secret(\'SNOWFLAKE_JDBC_URL\') }}"' if profesor else
+           'jdbc:snowflake://xsdiwiv-xz59673.snowflakecomputing.com')
     common = """    type: io.kestra.plugin.jdbc.snowflake.Query
-    url: \"{{ secret('SNOWFLAKE_JDBC_URL') }}\"
+    url: JDBC_URL_PLACEHOLDER
     username: PSET2_PIPELINE_SVC
     privateKey: \"{{ secret('SNOWFLAKE_PRIVATE_KEY') }}\"
     privateKeyPassword: \"{{ secret('SNOWFLAKE_PRIVATE_KEY_PASSWORD') }}\"
@@ -160,7 +165,7 @@ def render():
     warehouse: COMPUTE_WH
     database: PSET2_DEMO_SINTETICO
     schema: RAW
-"""
+""".replace('JDBC_URL_PLACEHOLDER', url)
     tasks = []
     for task_id, query, fetch in [
         ("insertar_obligaciones_ficticias",sql_obligaciones(),None),
@@ -178,15 +183,29 @@ def render():
       - \"{{ outputs.comprobar_lote_sintetico.row.ESTADO == 'OK' }}\"
     errorMessage: DEMO_SINTETICA_NO_CONCILIA
 """
+    flow_id = 'demo_sintetico_profesor' if profesor else 'demo_sintetico_raw'
     return ("# DEMOSTRACION CON DATOS FICTICIOS. Nunca accede a SQL Server municipal.\n"
-            "id: demo_sintetico_raw\nnamespace: usfq.pset2\n"
+            f"id: {flow_id}\nnamespace: usfq.pset2\n"
             "description: 'DEMO SINTETICA: genera obligaciones/pagos ficticios y los carga en Snowflake Raw.'\n"
             "concurrency:\n  limit: 1\n  behavior: QUEUE\n"
             "tasks:\n" + "".join(tasks) + checks)
 
 
 if __name__ == "__main__":
-    DEST.parent.mkdir(parents=True,exist_ok=True)
-    DEST.write_text(render(),encoding="utf-8")
-    print(f"Flujo sintetico generado: {DEST.relative_to(ROOT)}")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--profesor', action='store_true',
+                        help='Crear Flow separado con JDBC propio en .runtime; no altera el Flow validado.')
+    args = parser.parse_args()
+    dest = ROOT / '.runtime' / 'demo_sintetico_profesor.yml' if args.profesor else DEST
+    if args.profesor:
+        # Prepare-Bridge.ps1 debe preparar la carpeta privada antes; no ampliar ACL.
+        if not dest.parent.is_dir() or dest.parent.is_symlink():
+            parser.error('Preparar primero .runtime privada con ingesta/Prepare-Bridge.ps1.')
+        # No sobrescribir una copia local ya adaptada.
+        with dest.open('x', encoding='utf-8', newline='\n') as output:
+            output.write(render(profesor=True))
+    else:
+        dest.parent.mkdir(parents=True,exist_ok=True)
+        dest.write_text(render(),encoding="utf-8")
+    print(f"Flujo sintetico generado: {dest.relative_to(ROOT)}")
     print("Sin red, sin datos privados y sin ejecutar cargas.")
