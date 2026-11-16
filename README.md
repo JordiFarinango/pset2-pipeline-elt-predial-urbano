@@ -1,6 +1,30 @@
 # PSet #2 — Impuestos prediales urbanos de Cayambe
 
-## Estado real comunicado por el responsable — 15 de noviembre de 2026
+## Evidencia final de la demostración sintética — 15 de noviembre de 2026
+
+La demo **comienza en Kestra con datos ficticios; no comienza en SQL Server**.
+Kestra genera los datos sintéticos en la base exclusiva `PSET2_DEMO_SINTETICO`.
+Después se ejecutan **dbt y PySpark manualmente, en ese orden**, para el lote
+`11111111-2222-4333-8444-555555555555`.
+
+| Etapa | Resultado real verificado |
+|---|---|
+| Kestra | SUCCESS, 5 tareas completadas |
+| Snowflake RAW | 10 obligaciones, 6 movimientos sintéticos, lote confirmado |
+| dbt | 10 modelos, 113 pruebas: 123 PASS, 1 WARN, 0 ERROR, 0 SKIP |
+| Advertencia dbt | `observaciones_calidad` |
+| PySpark | SUCCESS, 10 filas OBT, 6 movimientos, 0 identificadores nulos, 0 duplicados, 0 diferencias de importes y agregados |
+
+Estos resultados verificados fueron comunicados por el responsable. No se
+ejecutaron pruebas, builds ni nuevas ingestas para esta actualización documental.
+La advertencia se conserva; esta evidencia acredita la demo sintética, no la
+extracción municipal ni una orquestación integral automática.
+La ejecución manual y sus requisitos se detallan en [demo/README.md](demo/README.md).
+El docente necesita configurar su propia cuenta Snowflake, credenciales,
+permisos y entorno antes de ejecutar la demo; el repositorio no proporciona
+acceso a la cuenta del estudiante.
+
+## Evidencia original del flujo municipal comunicada por el responsable — 15 de noviembre de 2026
 
 Lote validado: 8e977e06-ce56-4b4d-9781-cdf6766fb79c.
 
@@ -160,17 +184,19 @@ coordinacion integral segura; no se crea el PDF final en esta tarea.
 
 ## Demostración con datos 100 % sintéticos (sin VPN)
 
-Se ha preparado una **modalidad adicional, NO validada aún en una ejecución real**:
+Se ha validado una **modalidad adicional con datos ficticios**:
 `kestra/flows/demo_sintetico_raw.yml` genera 10 obligaciones y 6 movimientos
 ficticios en la base PSET2_DEMO_SINTETICO, separada de PSET2_CAYAMBE. Permite continuar manualmente con
 los modelos dbt existentes y el trabajo PySpark/OBT. No utiliza la VPN ni
 extrae datos de SQL Server municipal. No reproduce la extracción SQL Server del
 proyecto real: simula la fuente con consultas sintéticas ejecutadas por Kestra.
 
-Instrucciones, dependencias y guardarraíles en [demo/README.md](demo/README.md).
-Las evidencias auténticas de la entrega siguen correspondiendo al lote de
-pruebas autorizado y no a esta demo. La demo puede reutilizar la misma cuenta y el mismo usuario de servicio, pero
-exige una base de datos distinta y una validación real antes de presentarse
-como funcional. El docente puede usar su cuenta propia con igual contrato.
+Instrucciones, dependencias, resultados finales y guardarraíles en
+[demo/README.md](demo/README.md). La evidencia sintética del lote
+`11111111-2222-4333-8444-555555555555` se conserva separada de la evidencia
+original del flujo municipal documentada arriba. La demo reutilizó la cuenta
+y el usuario de servicio del estudiante con una base exclusiva:
+`PSET2_DEMO_SINTETICO`. Para reproducirla, el docente debe configurar su propia
+cuenta Snowflake y el entorno descrito en la guía; no basta con clonar el repositorio.
 
 

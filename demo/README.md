@@ -2,6 +2,27 @@
 
 La cuenta Snowflake existente se reutiliza, con base **PSET2_DEMO_SINTETICO**. El flujo municipal existente permanece en **PSET2_CAYAMBE**, sin cambios.
 
+## Evidencia final verificada — 15 de noviembre de 2026
+
+La demo **comienza en Kestra con datos ficticios, no en SQL Server**. Kestra
+genera los datos sintéticos y confirma el lote en RAW. A continuación, dbt y
+PySpark se ejecutan **manualmente y en ese orden**; no se acredita una
+orquestación integral automática.
+
+- Lote sintético: `11111111-2222-4333-8444-555555555555`.
+- Base exclusiva: `PSET2_DEMO_SINTETICO`.
+- Kestra: **SUCCESS**, 5 tareas completadas.
+- Snowflake RAW: **10 obligaciones, 6 movimientos sintéticos, lote confirmado**.
+- dbt: **10 modelos, 113 pruebas, 123 PASS, 1 WARN, 0 ERROR, 0 SKIP**.
+- Advertencia conservada: `observaciones_calidad`.
+- PySpark: **SUCCESS**, 10 filas OBT, 6 movimientos, 0 identificadores nulos,
+  0 duplicados, 0 diferencias de importes y agregados.
+
+Los resultados reales verificados fueron comunicados por el responsable.
+Esta actualización es documental: no se ejecutaron pruebas, builds ni nuevas
+ingestas. La evidencia sintética no demuestra la extracción desde SQL Server
+ni sustituye la evidencia original del flujo municipal.
+
 ## Configuración rápida (solo equipo del estudiante)
 
 1. En Snowflake ejecutar todo `demo/preparar_base_demo.sql` (rol `ACCOUNTADMIN` o roles con facultades equivalentes) para crear base, cinco esquemas, tres tablas RAW y tabla OBT, **vacías**. El SQL no lee las tablas originales.
@@ -38,12 +59,18 @@ FROM PSET2_DEMO_SINTETICO.OBT.OBT_URBANO_OBLIGACIONES
 WHERE LOTE_ID='11111111-2222-4333-8444-555555555555';
 ```
 
-**Resultados esperados todavía NO validados con ejecución real:** Kestra `10/6/1/0`, dbt 10 modelos (una advertencia DQ prevista) y OBT `10/10/6/0`.
+**Resultados reales verificados:** Kestra SUCCESS (5 tareas), RAW con 10
+obligaciones, 6 movimientos y lote confirmado; dbt con 10 modelos y 113 pruebas
+(123 PASS, 1 WARN en `observaciones_calidad`, 0 ERROR, 0 SKIP); PySpark SUCCESS
+con 10 filas OBT, 6 movimientos, 0 identificadores nulos, 0 duplicados y 0
+diferencias de importes y agregados. La repetición para comprobar idempotencia
+del paso 2 es una instrucción de reproducción; no se declara verificada por
+estos resultados finales.
 
 ## Alcance, seguridad y reproducibilidad
 
 - Demo comienza en Kestra, que genera SQL de datos sintéticos; no extrae SQL Server ficticio y no se debe presentar como origen SQL Server → Kestra.
 - Este paquete añade guardarraíl: dbt y Spark exigen `PSET2_SYNTHETIC_DEMO` y base `PSET2_DEMO_SINTETICO`. En modo original siguen usando `PSET2_CAYAMBE`. La cuenta puede ser la misma; los datos se aíslan por base.
 - Aunque se reutiliza la cuenta y el rol, los datos sintéticos nunca se insertan en `PSET2_CAYAMBE` con estos archivos; se recomienda revisar la configuración activa de Kestra antes de lanzar.
-- El docente puede usar su propia cuenta Snowflake modificando únicamente `DBT_SNOWFLAKE_ACCOUNT`, `PSET2_DEMO_ACCOUNT` y el URL JDBC/clave del Flow, con rol/usuario/base/warehouse equivalentes. No se incluyen secretos ni accesos municipales.
+- Para reproducir la demo, el docente debe configurar su propia cuenta Snowflake: preparar la base, esquemas y tablas del paso 1, disponer de usuario, rol, permisos, warehouse y clave privada propios, y adaptar `DBT_SNOWFLAKE_ACCOUNT`, `PSET2_DEMO_ACCOUNT`, la conexión JDBC y los secretos del Flow. También debe preparar Kestra, los entornos dbt/PySpark y el contenedor Spark. Los valores y rutas del ejemplo corresponden al equipo del estudiante y requieren adaptación. El repositorio no da acceso a la cuenta del estudiante ni incluye secretos o accesos municipales; clonar el repositorio no deja el pipeline listo para ejecutar.
 - Validación offline: `py -3.12 .\demo\verificar_demo_offline.py`. No prueba realmente Snowflake, Kestra, dbt ni Spark.
